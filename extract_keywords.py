@@ -65,14 +65,45 @@ def download_pdf_from_url(url: str):
 
 
 def download_pdf_from_normal_url(url: str):
-    r = requests.get(url, stream=True)
-
-    with open(local_filename, 'wb') as f:
-        f.write(r.content)
+    response = requests.get(url, stream=True)
+    with open(local_filename, 'wb') as file:
+        file.write(response.content)
 
 
 def download_pdf_from_google_drive_url(url: str):
-    print("get google drive url")
+    file_id = url.split('/')[5]
+    download_file_from_google_drive(file_id, local_filename)
+
+
+def download_file_from_google_drive(file_id, destination):
+    url = "https://docs.google.com/uc?export=download"
+    session = requests.Session()
+
+    response = session.get(url, params={'id': file_id}, stream=True)
+    token = get_confirm_token(response)
+
+    if token:
+        params = {'id': file_id, 'confirm': token}
+        response = session.get(url, params=params, stream=True)
+
+    save_response_content(response, destination)
+
+
+def get_confirm_token(response):
+    for key, value in response.cookies.items():
+        if key.startswith('download_warning'):
+            return value
+
+    return None
+
+
+def save_response_content(response, destination):
+    CHUNK_SIZE = 32768
+
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(CHUNK_SIZE):
+            if chunk:
+                f.write(chunk)
 
 
 def main():
@@ -83,8 +114,8 @@ def main():
     :return: void
     """
 
-    url = normal_pdf_urls[0]
-    # url = google_drive_pdf_urls[0]
+    # url = normal_pdf_urls[0]
+    url = google_drive_pdf_urls[0]
     # url = "http://www.africau.edu/images/default/sample.pdf"
 
     download_pdf_from_url(url)
