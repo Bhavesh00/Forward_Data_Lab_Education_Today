@@ -67,7 +67,7 @@ def google_knowledge_graph(query):
 
     # query_urls(prof_list)
     #api_key = open('.api_key').read()
-    api_key = "AIzaSyC26XthU72YUZjxf_0nK50UTmCPfoO7vzw"
+    api_key = ""
     #query = "Jiawei Han"
     service_url = 'https://kgsearch.googleapis.com/v1/entities:search'
     params = {
