@@ -12,7 +12,7 @@ class Professor:
 
 
     def get_connections(self):
-        return self.adjacent.keys()
+        return list(self.adjacent.keys())
 
 
     def get_name(self):
@@ -50,7 +50,8 @@ class Graph:
             for other_prof in self.focus_to_prof_name_dict[focus]:
                 if other_prof == name:
                     continue
-                edge_weight = -(dict_of_focus_to_weight[focus] + other_prof.get_focus_weight[focus])
+                edge_weight = -(dict_of_focus_to_weight[focus] + self.prof_name_dict[other_prof].get_focus_weight(focus))
+                self.add_edge(name, other_prof, edge_weight)
         return new_vertex
 
 
@@ -67,18 +68,18 @@ class Graph:
 
 
     def add_edge(self, frm, to, cost = 0):
-        self.prof_name_dict[frm].add_neighbor(self.prof_name_dict[to], cost)
-        self.prof_name_dict[to].add_neighbor(self.prof_name_dict[frm], cost)
+        self.prof_name_dict[frm].add_neighbor(to, cost)
+        self.prof_name_dict[to].add_neighbor(frm, cost)
 
 
     def min_distance_node(self, dist, sptSet):
         min = math.inf
-        min_index = ""
-        for v in self.prof_name_dict.keys():
-            if dist[v] < min and sptSet[v] == False:
-                min = dist[v]
-                min_index = v
-        return min_index
+        min_name = ""
+        for name in self.prof_name_dict.keys():
+            if dist[name] < min and sptSet[name] == False:
+                min = dist[name]
+                min_name = name
+        return min_name
 
 
     def get_vertices(self):
@@ -86,24 +87,23 @@ class Graph:
 
 
     def dijkstra(self, src):
-        dist_dict = {node : math.inf for node in self.prof_name_dict.keys()}
+        dist_dict = {name : math.inf for name in self.prof_name_dict.keys()}
         dist_dict[src] = 0
-        sptSet = {node : False for node in self.prof_name_dict.keys()}
+        sptSet = {name : False for name in self.prof_name_dict.keys()}
         #which stands for "shortest path tree"
 
-        for cout in range(self.num_vertices):
+        for count in range(self.num_vertices):
             # Pick the minimum distance vertex from
             # the set of vertices not yet processed.
-            # u is always equal to src in first iteration
             u = self.min_distance_node(dist_dict, sptSet)
             sptSet[u] = True
             # Update dist value of the adjacent vertices
             # of the picked vertex only if the current
             # distance is greater than new distance and
             # the vertex in not in the shortest path tree
-            for v in self.prof_name_dict.keys():
-                if sptSet[v] == False and dist_dict[v] > dist_dict[u] + self.get_professor_node(u).getweight(v):
-                    dist_dict[v] = dist_dict[u] + self.get_professor_node(u).getweight(v)
+            for name in self.prof_name_dict.keys():
+                if sptSet[name] == False and dist_dict[name] > dist_dict[u] + self.get_professor_node(u).get_weight(name):
+                    dist_dict[name] = dist_dict[u] + self.get_professor_node(u).get_weight(name)
         return dist_dict
 
 
@@ -119,3 +119,10 @@ class Graph:
 
 if __name__ == '__main__':
     relation_graph = Graph()
+    tom = {"algo":5, "machine learning" : 10}
+    bob = {"algo": 7, "machine learning": 2, "data mining" : 3}
+    relation_graph.add_professor_node("Tom", tom)
+    relation_graph.add_professor_node("Bob", bob)
+    neighbors = relation_graph.get_professor_node("Tom").get_connections()
+    print(neighbors)
+    print(relation_graph.related_professors("Tom"))
