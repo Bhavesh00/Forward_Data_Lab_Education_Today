@@ -1,4 +1,5 @@
 import string
+import os
 import requests
 from io import StringIO
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
@@ -9,6 +10,7 @@ import nltk
 # nltk.download()
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
+import yake
 
 # [1] has built-in keywords
 normal_pdf_urls = ["https://www.researchgate.net/profile/Abdussalam_Alawini/publication"
@@ -29,13 +31,30 @@ local_filename = "download.pdf"
 
 def extract_keywords_from_pdf():
     pdf_string = convert_pdf_to_str()
-    # print(pdf_string)
-    already_have_keywords_or_index_term()
 
-    # tokens = nltk.word_tokenize(pdf_string)
-    # tokens = list(filter(lambda token: token.lower() not in string.punctuation, tokens))
-    # tokens = list(filter(lambda token: token.lower() not in stopwords.words('english'), tokens))
-    # print(tokens)
+    language = "en"
+    max_ngram_size = 3
+    deduplication_threshold = 0.9
+    num_keywords = 20
+    custom_kw_extractor = yake.KeywordExtractor(lan=language, n=max_ngram_size, dedupLim=deduplication_threshold,
+                                                top=num_keywords, features=None)
+    keywords = custom_kw_extractor.extract_keywords(pdf_string)
+    keywords = sorted(keywords, key=lambda x: x[1], reverse=True)
+
+    keywords = [keyword[0].lower() for keyword in keywords]
+    keywords = sorted(keywords, key=len)
+
+    keywords_no_repeat = []
+    for keyword in keywords:
+        if keyword not in keywords_no_repeat:
+            if keyword[-1] == 's':
+                if keyword[:-1] in keywords_no_repeat:
+                    continue
+            elif keyword[-2:-1] == 'es':
+                if keyword[:-2] in keywords_no_repeat:
+                    continue
+            keywords_no_repeat.append(keyword)
+    print(keywords_no_repeat)
 
 
 def convert_pdf_to_str():
@@ -51,10 +70,6 @@ def convert_pdf_to_str():
     pdf_string = return_string.getvalue()
     return_string.close()
     return pdf_string
-
-
-def already_have_keywords_or_index_term():
-    pass
 
 
 def download_pdf_from_url(url: str):
@@ -106,6 +121,11 @@ def save_response_content(response, destination):
                 f.write(chunk)
 
 
+def del_local_download():
+    if os.path.exists(local_filename):
+        os.remove(local_filename)
+
+
 def main():
     """
     input: (professor name: string, professor institution: string, paper url: string) (week 1 just have fixed urls)
@@ -114,10 +134,12 @@ def main():
     :return: void
     """
 
-    # url = normal_pdf_urls[0]
-    url = google_drive_pdf_urls[0]
+    url = normal_pdf_urls[1]
+    # url = google_drive_pdf_urls[0]
     # url = "http://www.africau.edu/images/default/sample.pdf"
 
-    download_pdf_from_url(url)
-    extract_keywords_from_pdf()
+    # download_pdf_from_url(url)
+    # extract_keywords_from_pdf()
+    # del_local_download()
 
+    extract_keywords_from_pdf()
