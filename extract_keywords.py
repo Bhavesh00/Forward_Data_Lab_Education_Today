@@ -1,4 +1,3 @@
-import string
 import os
 import requests
 from io import StringIO
@@ -8,9 +7,8 @@ from pdfminer.layout import LAParams
 from pdfminer.pdfpage import PDFPage
 import nltk
 # nltk.download()
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
 import yake
+import mysql.connector
 
 # [1] has built-in keywords
 normal_pdf_urls = ["https://www.researchgate.net/profile/Abdussalam_Alawini/publication"
@@ -20,11 +18,19 @@ normal_pdf_urls = ["https://www.researchgate.net/profile/Abdussalam_Alawini/publ
                    "http://sites.computer.org/debull/A18mar/p27.pdf",
                    "http://sites.computer.org/debull/A18mar/p39.pdf"]
 
-# [3] has built-in keywords
-google_drive_pdf_urls = ["https://drive.google.com/file/d/1iYsVVlMo57OENah9tc0oNJaBV02jcMqc",
-                         "https://drive.google.com/file/d/1i2FWf2DwYtOsTTj79dm9ujnago4PB9Io",
-                         "https://drive.google.com/file/d/1DGLaDupsKVvL04-8mdOHKxycyy114Hnj",
-                         "https://drive.google.com/file/d/1xH8Ekrs5-3waR_udmoNoZ3bHvrm8GEzr"]
+test_pdf_urls = ["https://drive.google.com/file/d/1iYsVVlMo57OENah9tc0oNJaBV02jcMqc",
+                 "https://drive.google.com/file/d/1i2FWf2DwYtOsTTj79dm9ujnago4PB9Io",
+                 "https://drive.google.com/file/d/1DGLaDupsKVvL04-8mdOHKxycyy114Hnj",
+                 "https://drive.google.com/file/d/1hYaDnM0NnTi8kOh41jr1aUaBkZMzmvII",
+                 "https://drive.google.com/file/d/1FqU_tpl_xBvLmRAcyMbTqfoWEctILO--",
+                 "https://drive.google.com/file/d/1Ny9DiliMHxH_ik5VPWHwYE7zU7AkVwbD",
+                 "https://drive.google.com/file/d/1BgrprdFbOEpq4MkHdm685Rdd63wlC3qw",
+                 "https://drive.google.com/file/d/1eJ6bkh2kjVjxho-3u4ei4rDyQSqZRxZD",
+                 "https://drive.google.com/file/d/1kzACi2rPnylLe0j5h_RpbWjApSO4VHi7",
+                 "https://drive.google.com/file/d/13MThXy8DXhlx3bgrbHKDIzdc8dfvMfJu",
+                 "https://drive.google.com/file/d/1BDFW4dYUxS3O_QHqqmQmSSagJy6Jmf1P",
+                 "https://drive.google.com/file/d/140y2UaYncRE9vLBMDdpccn9yp_dw9Etq",
+                 "https://drive.google.com/file/d/1yBf-WuRKbNJWNeF2M-EGleYrxXiQycuf"]
 
 local_filename = "download.pdf"
 
@@ -33,9 +39,9 @@ def extract_keywords_from_pdf():
     pdf_string = convert_pdf_to_str()
 
     language = "en"
-    max_ngram_size = 3
+    max_ngram_size = 2
     deduplication_threshold = 0.9
-    num_keywords = 20
+    num_keywords = 8
     custom_kw_extractor = yake.KeywordExtractor(lan=language, n=max_ngram_size, dedupLim=deduplication_threshold,
                                                 top=num_keywords, features=None)
     keywords = custom_kw_extractor.extract_keywords(pdf_string)
@@ -54,7 +60,7 @@ def extract_keywords_from_pdf():
                 if keyword[:-2] in keywords_no_repeat:
                     continue
             keywords_no_repeat.append(keyword)
-    print(keywords_no_repeat)
+    return keywords_no_repeat
 
 
 def convert_pdf_to_str():
@@ -87,10 +93,6 @@ def download_pdf_from_normal_url(url: str):
 
 def download_pdf_from_google_drive_url(url: str):
     file_id = url.split('/')[5]
-    download_file_from_google_drive(file_id, local_filename)
-
-
-def download_file_from_google_drive(file_id, destination):
     url = "https://docs.google.com/uc?export=download"
     session = requests.Session()
 
@@ -101,7 +103,7 @@ def download_file_from_google_drive(file_id, destination):
         params = {'id': file_id, 'confirm': token}
         response = session.get(url, params=params, stream=True)
 
-    save_response_content(response, destination)
+    save_response_content(response, local_filename)
 
 
 def get_confirm_token(response):
@@ -113,12 +115,41 @@ def get_confirm_token(response):
 
 
 def save_response_content(response, destination):
-    CHUNK_SIZE = 32768
+    chunk_size = 32768
 
     with open(destination, "wb") as f:
-        for chunk in response.iter_content(CHUNK_SIZE):
+        for chunk in response.iter_content(chunk_size):
             if chunk:
                 f.write(chunk)
+
+
+def update_keywords_to_db(name, institution, keywords):
+    db = mysql.connector.connect(user='root', password='yEBpALG6zHDoCFLn',
+                                 host='104.198.163.126',
+                                 database='project')
+    cursor = db.cursor()
+
+    for keyword in keywords:
+        query = "SELECT occurrence FROM Keywords " \
+                "WHERE keyword = %s AND name = %s AND institution = %s"
+        val = (keyword, name, institution)
+        cursor.execute(query, val)
+        data = cursor.fetchall()
+
+        if data:
+            occurrence = data[0][0] + 1
+            query = "UPDATE Keywords set occurrence = %s " \
+                    "WHERE name = %s AND institution = %s AND keyword = %s"
+            val = (occurrence, name, institution, keyword)
+        else:
+            query = "INSERT INTO Keywords (name, institution, keyword, occurrence)" \
+                    "VALUES (%s, %s, %s, %s)"
+            val = (name, institution, keyword, 1)
+
+        cursor.execute(query, val)
+        db.commit()
+
+    db.close()
 
 
 def del_local_download():
@@ -134,12 +165,11 @@ def main():
     :return: void
     """
 
-    url = normal_pdf_urls[1]
-    # url = google_drive_pdf_urls[0]
-    # url = "http://www.africau.edu/images/default/sample.pdf"
+    test_prof_name = 'Kevin Chang'
+    test_institution = 'University of Illinois at Urbana Champaign'
 
-    # download_pdf_from_url(url)
-    # extract_keywords_from_pdf()
+    for url in test_pdf_urls:
+        download_pdf_from_url(url)
+        keywords = extract_keywords_from_pdf()
+        update_keywords_to_db(test_prof_name, test_institution, keywords)
     # del_local_download()
-
-    extract_keywords_from_pdf()
