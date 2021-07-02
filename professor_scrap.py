@@ -1,7 +1,10 @@
 from __future__ import print_function
 from pprint import pprint
-
+import html2text
+from urllib.request import urlopen
 from googlesearch import search # https://pypi.org/project/googlesearch-python/
+
+from database_controller import update_Professors_DB
 
 '''
 Go to Google. 
@@ -34,10 +37,6 @@ def extract_information(p_url):
     import requests
     from bs4 import BeautifulSoup
 
-    information_criteria = ["Biography", "Education","Awards", "Research interests", "Publications"]
-
-
-
     headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET',
@@ -46,18 +45,31 @@ def extract_information(p_url):
     'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'
     }
 
+    information_criteria = ["Education", "Biography","Professional Highlights", "Research Statement", "Honors"]
+    infoDictionary = {}
+
     url = p_url
     req = requests.get(url, headers)
     soup = BeautifulSoup(req.content, 'html.parser')
-    target = soup.find("h2",text = "Biography")
-    i = 0
-    if target:
-        for sib in target.find_next_siblings():
-            if sib.name == "h2":
-                break
-            else:
-                print("\n",sib.text)
 
+    for ic in information_criteria:
+        for heading in soup.find_all('h2'):
+            if not ic in heading.text: continue
+            info_packet = ""
+            for sib in heading.find_next_siblings():
+                if sib.name == "h2":
+                    break
+                else:
+                    #print(ic)
+                    info_packet+=" "+sib.text
+
+            if ic in infoDictionary:
+                infoDictionary[ic]+= info_packet
+            else:
+                infoDictionary[ic] = info_packet
+
+    print(infoDictionary['Research Statement'])
+    return infoDictionary
 
 
 def google_knowledge_graph(query):
@@ -83,10 +95,40 @@ def google_knowledge_graph(query):
         exit()
         print(element['result']['name'] + ' (' + str(element['resultScore']) + ')')
 
+
 def main():
     test_url = "https://cs.illinois.edu/about/people/faculty/kcchang"
-    extract_information(test_url)
+    test_url2 ="http://www.forwarddatalab.org/kevinccchang"
+    test_url3="http://hanj.cs.illinois.edu/"
 
+    kC_data = extract_information(test_url)
+
+    val = [('Kevin C. Chang', kC_data['Biography'][0:255], kC_data['Honors'][0:255], kC_data['Education'][0:255], 'University of Illinois Urbana-Champaign')]
+
+    update_Professors_DB(val)
 
 if __name__ == "__main__":
     main()
+
+
+
+    #html = open(test_url).read()
+#     webUrl  =  urlopen(test_url)
+#     print ("result code: " + str(webUrl.getcode()))
+
+#     page_html =  webUrl.read()
+#     h = html2text.HTML2Text()
+#  # Ignore converting links from HTML
+#     h.ignore_links = True
+#     print(h.handle(page_html))
+    #print(page_html)
+    #print(html2text.html2text(page_html))
+
+    # resource = urlopen(test_url3)
+    # content = resource.read()
+    # #charset = resource
+    # content = content.decode('utf-8')
+
+    # ascii_page = html2text.html2text(content)
+    # print(ascii_page)
+    # print(ascii_page.find("##"))
