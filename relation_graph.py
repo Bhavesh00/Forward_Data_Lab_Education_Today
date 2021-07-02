@@ -1,9 +1,17 @@
 import math
 
 class Professor:
+    def update_to_standard_dict(self, dict):
+        all = sum(dict.values())
+        for k in dict.keys():
+            dict[k] = dict[k] / all
+            dict[k] = round(dict[k] * 100)
+        return dict
+
     def __init__(self, name, dict_of_focus_to_weight):
         self.name = name
         self.focus_to_weight_dict = dict_of_focus_to_weight.copy()
+        self.focus_to_weight_dict = self.update_to_standard_dict(self.focus_to_weight_dict)
         self.adjacent = {}
 
 
@@ -64,7 +72,7 @@ class Graph:
             for other_prof in self.focus_to_prof_name_dict[focus]:
                 if other_prof == name:
                     continue
-                edge_weight = -(dict_of_focus_to_weight[focus] + self.prof_name_dict[other_prof].get_focus_weight(focus))
+                edge_weight = dict_of_focus_to_weight[focus] + self.prof_name_dict[other_prof].get_focus_weight(focus)
                 self.add_edge(name, other_prof, edge_weight)
         return new_vertex
 
@@ -74,6 +82,8 @@ class Graph:
 
 
     def rank_list_of_professors(self, focus):
+        #return a list of (name, int) pairs, sorted based on the int part,
+        #larger value means more related to the input focus
         rank_list = []
         for prof in self.focus_to_prof_name_dict[focus]:
             rank_list.append((prof, self.get_professor_node(prof).focus_to_weight_dict[focus]))
@@ -83,11 +93,11 @@ class Graph:
 
     def add_edge(self, frm, to, cost = 0):
         if to in self.prof_name_dict[frm].get_connections():
-            self.prof_name_dict[frm].adjacent[to] += cost
-            self.prof_name_dict[to].adjacent[frm] += cost
+            self.prof_name_dict[frm].adjacent[to] -= cost
+            self.prof_name_dict[to].adjacent[frm] -= cost
         else:
-            self.prof_name_dict[frm].add_neighbor(to, cost)
-            self.prof_name_dict[to].add_neighbor(frm, cost)
+            self.prof_name_dict[frm].add_neighbor(to, 200 - cost)
+            self.prof_name_dict[to].add_neighbor(frm, 200 - cost)
 
 
     def min_distance_node(self, dist, sptSet):
@@ -128,11 +138,13 @@ class Graph:
 
 
     def related_professors(self, src_prof):
+        #Use Dijkstra's algorithm to return a list of (name, int) pairs,
+        #sorted based on the int part, with smaller value meaning more closely related
         dist_dict = self.dijkstra(src_prof)
         rank_list = []
         for prof in dist_dict:
             rank_list.append((prof, dist_dict[prof]))
-        rank_list.sort(key=lambda x : x[1], reverse=True)
+        rank_list.sort(key=lambda x : x[1])
         return rank_list
 
 
