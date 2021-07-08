@@ -16,6 +16,7 @@ search_query = "Jiawei Han, University of Illinois at Urbana-Champaign"
 list = search(search_query, 10, "en")
 urls = []
 publications = []
+publications_titles = []
 
 # Finding List of Google search URL's that have .org, .edu, or scholar.google in the URL
 for i in range(len(list)):
@@ -36,8 +37,11 @@ for url in urls:
     if "scholar.google" in url:
         print("Google Scholar Publication: " + url)
         for link in soup.find_all(["a"], "gsc_a_at"):
+            # Potential Error:
             # print(link.get('data-href'))
-            publications.append("https://scholar.google.com" + link.get('data-href'))
+            if link.get('href') != None:
+                publications.append("https://scholar.google.com" + link.get('href'))
+                publications_titles.append(link.text)
 
     # Convert HTML into easy-to-read plain ASCII text
     clean_html = html2text.html2text(soup.prettify())
@@ -47,10 +51,13 @@ for url in urls:
         temp_file.write(clean_html)
         temp_file.close()
 
-# Convert Python array to JSON array
-jsonStr = json.dumps(publications)
-print(jsonStr)
+# Convert Python arrays to JSON strings
+jsonStrUrls = json.dumps(publications)
+print(jsonStrUrls)
+jsonStrPublicationTitles = json.dumps(publications_titles)
+print(publications_titles)
 
 # Print out the publications for the professor.
 for x in range(len(publications)):
+   print(publications_titles[x])
    print(publications[x])
