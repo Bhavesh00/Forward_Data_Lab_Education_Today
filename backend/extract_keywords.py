@@ -5,6 +5,7 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
 from pdfminer.pdfpage import PDFPage
+from bs4 import BeautifulSoup
 import nltk
 # nltk.download()
 import yake
@@ -31,6 +32,21 @@ test_pdf_urls = ["https://drive.google.com/file/d/1iYsVVlMo57OENah9tc0oNJaBV02jc
                  "https://drive.google.com/file/d/1BDFW4dYUxS3O_QHqqmQmSSagJy6Jmf1P",
                  "https://drive.google.com/file/d/140y2UaYncRE9vLBMDdpccn9yp_dw9Etq",
                  "https://drive.google.com/file/d/1yBf-WuRKbNJWNeF2M-EGleYrxXiQycuf"]
+
+test_google_scholar_urls = [
+    # "/citations?view_op=view_citation&hl=en&user=sugWZ6MAAAAJ&citation_for_view=sugWZ6MAAAAJ:69ZgNCALVd0C",
+    "/citations?view_op=view_citation&hl=en&user=sugWZ6MAAAAJ&citation_for_view=sugWZ6MAAAAJ:u5HHmVD_uO8C",
+    # "/citations?view_op=view_citation&hl=en&user=sugWZ6MAAAAJ&citation_for_view=sugWZ6MAAAAJ:kRWSkSYxWN8C",
+    # "/citations?view_op=view_citation&hl=en&user=sugWZ6MAAAAJ&citation_for_view=sugWZ6MAAAAJ:eQOLeE2rZwMC",
+    # "/citations?view_op=view_citation&hl=en&user=sugWZ6MAAAAJ&citation_for_view=sugWZ6MAAAAJ:d1gkVwhDpl0C",
+    # "/citations?view_op=view_citation&hl=en&user=sugWZ6MAAAAJ&citation_for_view=sugWZ6MAAAAJ:u-x6o8ySG0sC",
+    # "/citations?view_op=view_citation&hl=en&user=sugWZ6MAAAAJ&citation_for_view=sugWZ6MAAAAJ:_B80troHkn4C",
+    # "/citations?view_op=view_citation&hl=en&user=sugWZ6MAAAAJ&citation_for_view=sugWZ6MAAAAJ:WF5omc3nYNoC",
+    # "/citations?view_op=view_citation&hl=en&user=sugWZ6MAAAAJ&citation_for_view=sugWZ6MAAAAJ:9yKSN-GCB0IC",
+    # "/citations?view_op=view_citation&hl=en&oe=ASCII&user=Kv9AbjMAAAAJ&citation_for_view=Kv9AbjMAAAAJ:31TvLzYri2IC"
+]
+
+google_scholar_prefix = "https://scholar.google.com"
 
 local_filename = "download.pdf"
 
@@ -123,6 +139,42 @@ def save_response_content(response, destination):
                 f.write(chunk)
 
 
+def scrape_description(url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    container = soup.find('div', class_="gsh_csp")
+    if container is None:
+        print(response.content)
+        return soup.find('div', class_="gsh_small").text
+    return container.text
+
+
+def extract_keywords_from_description(description):
+    language = "en"
+    max_ngram_size = 2
+    deduplication_threshold = 0.9
+    num_keywords = 8
+    custom_kw_extractor = yake.KeywordExtractor(lan=language, n=max_ngram_size, dedupLim=deduplication_threshold,
+                                                top=num_keywords, features=None)
+    keywords = custom_kw_extractor.extract_keywords(description)
+    keywords = sorted(keywords, key=lambda x: x[1], reverse=True)
+
+    keywords = [keyword[0].lower() for keyword in keywords]
+    keywords = sorted(keywords, key=len)
+
+    keywords_no_repeat = []
+    for keyword in keywords:
+        if keyword not in keywords_no_repeat:
+            if keyword[-1] == 's':
+                if keyword[:-1] in keywords_no_repeat:
+                    continue
+            elif keyword[-2:-1] == 'es':
+                if keyword[:-2] in keywords_no_repeat:
+                    continue
+            keywords_no_repeat.append(keyword)
+    return keywords_no_repeat
+
+
 def update_keywords_to_db(name, institution, keywords):
     db = mysql.connector.connect(user='root', password='yEBpALG6zHDoCFLn',
                                  host='104.198.163.126',
@@ -147,14 +199,23 @@ def update_keywords_to_db(name, institution, keywords):
             val = (name, institution, keyword, 1)
 
         cursor.execute(query, val)
-        db.commit()
 
+    db.commit()
     db.close()
 
 
 def del_local_download():
     if os.path.exists(local_filename):
         os.remove(local_filename)
+
+
+def get_pdf_link(url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    container = soup.find('div', class_='gsc_vcd_title_ggi')
+    if container is None:
+        return None
+    return container.find('a', href=True)['href']
 
 
 def main():
@@ -166,10 +227,24 @@ def main():
     """
 
     test_prof_name = 'Kevin Chang'
+    # test_prof_name = 'Jiawei Han'
     test_institution = 'University of Illinois at Urbana Champaign'
 
-    for url in test_pdf_urls:
-        download_pdf_from_url(url)
-        keywords = extract_keywords_from_pdf()
-        update_keywords_to_db(test_prof_name, test_institution, keywords)
-    # del_local_download()
+    # for url in test_pdf_urls:
+    #     download_pdf_from_url(url)
+    #     keywords = extract_keywords_from_pdf()
+    #     update_keywords_to_db(test_prof_name, test_institution, keywords)
+
+    for suffix in test_google_scholar_urls:
+        url = google_scholar_prefix + suffix
+        pdf_link = get_pdf_link(url)
+        if pdf_link is None:
+            description = scrape_description(url)
+            keywords = extract_keywords_from_description(description)
+            update_keywords_to_db(test_prof_name, test_institution, keywords)
+        else:
+            download_pdf_from_url(pdf_link)
+            keywords = extract_keywords_from_pdf()
+            update_keywords_to_db(test_prof_name, test_institution, keywords)
+            del_local_download()
+
