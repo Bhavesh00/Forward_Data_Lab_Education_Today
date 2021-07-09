@@ -230,11 +230,6 @@ def main():
     # test_prof_name = 'Jiawei Han'
     test_institution = 'University of Illinois at Urbana Champaign'
 
-    # for url in test_pdf_urls:
-    #     download_pdf_from_url(url)
-    #     keywords = extract_keywords_from_pdf()
-    #     update_keywords_to_db(test_prof_name, test_institution, keywords)
-
     for suffix in test_google_scholar_urls:
         url = google_scholar_prefix + suffix
         pdf_link = get_pdf_link(url)
@@ -247,4 +242,3 @@ def main():
             keywords = extract_keywords_from_pdf()
             update_keywords_to_db(test_prof_name, test_institution, keywords)
             del_local_download()
-
