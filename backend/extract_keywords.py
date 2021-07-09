@@ -1,11 +1,13 @@
 import os
 import requests
 from io import StringIO
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.pdfinterp import PDFResourceMasnager, PDFPageInterpreter, PDFResourceManager
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
 from pdfminer.pdfpage import PDFPage
 from bs4 import BeautifulSoup
+import time
+import numpy as np
 import nltk
 # nltk.download()
 import yake
@@ -144,8 +146,11 @@ def scrape_description(url):
     soup = BeautifulSoup(response.content, 'html.parser')
     container = soup.find('div', class_="gsh_csp")
     if container is None:
-        print(response.content)
-        return soup.find('div', class_="gsh_small").text
+        # print(response.content)
+        temp = soup.find('div', class_="gsc_oci_value")
+        if not temp:
+            return ""
+        return temp.text
     return container.text
 
 
@@ -212,10 +217,30 @@ def del_local_download():
 def get_pdf_link(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.content, 'html.parser')
-    container = soup.find('div', class_='gsc_vcd_title_ggi')
+    container = soup.find('div', class_='gsc_oci_title_ggi')
     if container is None:
         return None
     return container.find('a', href=True)['href']
+
+
+def extract_process(name, institution, urls):
+    for url in urls:
+        print(url)
+        pdf_link = get_pdf_link(url)
+        print(pdf_link)
+        if pdf_link is None:
+            description = scrape_description(url)
+            if description == "":
+                continue
+            keywords = extract_keywords_from_description(description)
+            update_keywords_to_db(name, institution, keywords)
+        else:
+            download_pdf_from_url(pdf_link)
+            keywords = extract_keywords_from_pdf()
+            update_keywords_to_db(name, institution, keywords)
+            del_local_download()
+
+        time.sleep(30*np.random.random() + 10)
 
 
 def main():
@@ -230,15 +255,7 @@ def main():
     # test_prof_name = 'Jiawei Han'
     test_institution = 'University of Illinois at Urbana Champaign'
 
+    urls = []
     for suffix in test_google_scholar_urls:
-        url = google_scholar_prefix + suffix
-        pdf_link = get_pdf_link(url)
-        if pdf_link is None:
-            description = scrape_description(url)
-            keywords = extract_keywords_from_description(description)
-            update_keywords_to_db(test_prof_name, test_institution, keywords)
-        else:
-            download_pdf_from_url(pdf_link)
-            keywords = extract_keywords_from_pdf()
-            update_keywords_to_db(test_prof_name, test_institution, keywords)
-            del_local_download()
+        urls.append(google_scholar_prefix + suffix)
+    extract_process(test_prof_name, test_institution, urls)
