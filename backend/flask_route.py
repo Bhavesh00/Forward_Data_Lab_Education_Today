@@ -23,10 +23,10 @@ def get_professor_ranked_list():
     institution_name = request.args.get('institution')
     if not db.get_professor_info(professor_name, institution_name):
         db.scrape_professor_info(professor_name, institution_name)
-    # data = db.get_professor_ranked_list(professor_name, institution_name)
+    data = db.get_professor_ranked_list(professor_name, institution_name)
 
-    return jsonify([]), 200
-    # return jsonify(data), 200
+    # return jsonify([]), 200
+    return jsonify(data), 200
 
 
 @app.route('/page', methods=['GET'])

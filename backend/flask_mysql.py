@@ -1,6 +1,8 @@
 from flask_route import app, mysql
 from relation_graph import Graph
 import professor_scrap
+import filter_sites
+import extract_keywords
 
 
 def get_professor_ranked_list(professor_name, institution_name):
@@ -67,5 +69,10 @@ def scrape_professor_info(professor_name, institution_name):
     extracted_professors = professor_scrap.audit_professors(temp_list)
     professor_scrap.update_Professors_DB(extracted_professors)
 
-    # Bhavesh method for publications
+    search_query = professor_name + ", " + institution_name
+
+    urls = filter_sites.getPublicationUrlAndTitle(search_query)
+
+    print(urls)
+    extract_keywords.extract_process(professor_name, institution_name, urls)
     return

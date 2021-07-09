@@ -83,15 +83,15 @@ def getPublicationUrlAndTitle(search_query):
                     publications_titles.append(link.text)
 
     # Convert Python arrays to JSON strings
-    jsonStrUrls = json.dumps(publications)
-    print(jsonStrUrls)
-    jsonStrPublicationTitles = json.dumps(publications_titles)
-    print(publications_titles)
+    # jsonStrUrls = json.dumps(publications)
+    # print(jsonStrUrls)
+    # jsonStrPublicationTitles = json.dumps(publications_titles)
+    # print(publications_titles)
 
     # Print out the publication titles and url's for the professor.
-    for x in range(len(publications)):
-        print(publications_titles[x])
-        print(publications[x])
+    # for x in range(len(publications)):
+    #     print(publications_titles[x])
+    #     print(publications[x])
 
     # Push the publications individually to the publications table on MySQL
     try:
@@ -103,7 +103,7 @@ def getPublicationUrlAndTitle(search_query):
 
         ) as connection:
             mycursor = connection.cursor()
-            sql = "INSERT INTO Publication (title, name, institution, url) VALUES (%s, %s, %s, %s)"
+            sql = "INSERT IGNORE INTO Publication (title, name, institution, url) VALUES (%s, %s, %s, %s)"
 
             for x in range(len(publications)):
                 val = (publications_titles[x], professor, institution, publications[x])
@@ -115,9 +115,9 @@ def getPublicationUrlAndTitle(search_query):
     except Error as e:
         print(e)
 
-    return jsonStrUrls, jsonStrPublicationTitles
+    return publications
 
 
-search_query = "Jiawei Han, University of Illinois at Urbana-Champaign"
-# htmlToText(search_query)
-getPublicationUrlAndTitle(search_query)
+# search_query = "Jiawei Han, University of Illinois at Urbana-Champaign"
+# # htmlToText(search_query)
+# getPublicationUrlAndTitle(search_query)
