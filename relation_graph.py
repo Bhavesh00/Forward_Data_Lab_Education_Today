@@ -42,6 +42,7 @@ class Graph:
         self.focus_to_prof_names_dict = {}  # research focus string  ->  list of professor name strings
         self.fos_cursor = fos_cursor  # dataset about professors recorded
         self.npmi_cursor = npmi_cursor  # dataset about similarity between two words
+        self.construct_graph()
 
     # print the information of the relation graph in a straight-forward way
     def __str__(self):
@@ -83,7 +84,8 @@ class Graph:
             dict_of_focus_to_weight = {}
             for r in rows:
                 dict_of_focus_to_weight[r[0]] = r[1]
-            self.add_professor_node(name, dict_of_focus_to_weight)
+            print(dict_of_focus_to_weight)
+            self.add_professor_node(name[0], dict_of_focus_to_weight)
 
     # returns all the professor names of this graph
     def get_vertices(self):
@@ -97,19 +99,26 @@ class Graph:
         self.prof_name_dict[to].adjacent[frm] = cost
 
     # the semantic similarity between two words, may vary depend on the selected database
-    @staticmethod
-    def similarity_score(npmi_cursor, word_1, word_2):
+    def similarity_score(self, word_1, word_2):
         if word_1 == word_2:
             return 1
-        npmi_cursor.execute("SELECT id FROM fos WHERE FoS_name = '%s'" % word_1)
-        token1 = npmi_cursor.fetchone()[0]
-        npmi_cursor.execute("SELECT id FROM fos WHERE FoS_name = '%s'" % word_2)
-        token2 = npmi_cursor.fetchone()[0]
-        npmi_cursor.execute("SELECT npmi FROM fos_npmi_springer WHERE id1 = %d AND id2 = %d" % (token1, token2))
-        ret = npmi_cursor.fetchone()
+        self.npmi_cursor.execute("SELECT id FROM fos WHERE FoS_name = '%s'" % word_1)
+        token1 = self.npmi_cursor.fetchone()
+        if token1 is None:
+            return 0
+        else:
+            token1 = token1[0]
+        self.npmi_cursor.execute("SELECT id FROM fos WHERE FoS_name = '%s'" % word_2)
+        token2 = self.npmi_cursor.fetchone()
+        if token2 is None:
+            return 0
+        else:
+            token2 = token2[0]
+        self.npmi_cursor.execute("SELECT npmi FROM fos_npmi_springer WHERE id1 = %d AND id2 = %d" % (token1, token2))
+        ret = self.npmi_cursor.fetchone()
         if ret is None:
-            npmi_cursor.execute("SELECT npmi FROM fos_npmi_springer WHERE id1 = %d AND id2 = %d" % (token2, token2))
-            ret_alt = npmi_cursor.fetchone()
+            self.npmi_cursor.execute("SELECT npmi FROM fos_npmi_springer WHERE id1 = %d AND id2 = %d" % (token2, token1))
+            ret_alt = self.npmi_cursor.fetchone()
             if ret_alt is None:
                 return 0
             return ret_alt[0]
@@ -123,7 +132,7 @@ class Graph:
         for a in focus1:
             max_factor = 0
             for b in focus2:
-                s_score = self.similarity_score(self.npmi_cursor, a, b)
+                s_score = self.similarity_score(a, b)
                 if s_score > max_factor:
                     max_factor = s_score
             if max_factor > 0.6:
@@ -131,7 +140,7 @@ class Graph:
         for b in focus2:
             max_factor = 0
             for a in focus1:
-                s_score = self.similarity_score(self.npmi_cursor, a, b)
+                s_score = self.similarity_score(a, b)
                 if s_score > max_factor:
                     max_factor = s_score
             if max_factor > 0.6:
@@ -146,7 +155,7 @@ class Graph:
             max_similarity = 0.6
             if focus not in self.focus_to_prof_names_dict.keys():
                 for tmp_focus in self.focus_to_prof_names_dict.keys():
-                    sim_score = self.similarity_score(self.npmi_cursor, focus, tmp_focus)
+                    sim_score = self.similarity_score(focus, tmp_focus)
                     if sim_score > max_similarity:
                         focus = tmp_focus
                         max_similarity = sim_score
@@ -226,7 +235,7 @@ if __name__ == '__main__':
         database="forward",
     )
     npmi_cursor = npmi_data.cursor()
-
+    print("npmi data connected")
     fos_data = mysql.connector.connect(
         host="104.198.163.126",
         user="root",
@@ -234,9 +243,9 @@ if __name__ == '__main__':
         database="project"
     )
     fos_cursor = fos_data.cursor()
-
+    print("keywords data connected")
     relation_graph = Graph(fos_cursor, npmi_cursor)
-
-    print(relation_graph.rank_list_of_professors(["machine", "data"]))
-
+    print("relation graph constructed")
+    print(relation_graph.rank_list_of_professors(["security", "data mining"]))
+    print(relation_graph.related_professors("Jiawei Han"))
     print(relation_graph)
