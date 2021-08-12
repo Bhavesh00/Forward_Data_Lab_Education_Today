@@ -1,4 +1,5 @@
 import mysql.connector
+import operator
 
 npmi_data = mysql.connector.connect(
     host="localhost",
@@ -16,31 +17,17 @@ npmi_cursor = npmi_data.cursor()
 #     )
 # fos_cursor = fos_data.cursor()
 
+def print_list(some_list):
+    ret = "("
+    for i in some_list:
+        ret += "'"
+        ret += i
+        ret += "',"
+    ret = ret[:-1]
+    ret += ")"
+    return ret
 
-def similarity_score(npmi_cursor, word_1, word_2):
-    if word_1 == word_2:
-        return 1
-    npmi_cursor.execute("SELECT id FROM fos WHERE FoS_name = '%s'" % word_1)
-    token1 = npmi_cursor.fetchone()
-    if token1 is None:
-        return 0
-    else:
-        token1 = token1[0]
-    npmi_cursor.execute("SELECT id FROM fos WHERE FoS_name = '%s'" % word_2)
-    token2 = npmi_cursor.fetchone()
-    if token2 is None:
-        return 0
-    else:
-        token2 = token2[0]
-    npmi_cursor.execute("SELECT npmi FROM fos_npmi_springer WHERE id1 = %d AND id2 = %d" % (token1, token2))
-    ret = npmi_cursor.fetchone()
-    if ret is None:
-        npmi_cursor.execute("SELECT npmi FROM fos_npmi_springer WHERE id1 = %d AND id2 = %d" % (token2, token1))
-        ret_alt = npmi_cursor.fetchone()
-        if ret_alt is None:
-            return 0
-        return ret_alt[0]
-    return ret[0]
-
-
-print(similarity_score(npmi_cursor, "feature selection", "neural network"))
+ins = print_list(["classification", "security"])
+print(ins)
+npmi_cursor.execute("SELECT * FROM fos WHERE FoS_name in " + ins)
+print(npmi_cursor.fetchall())
