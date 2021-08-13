@@ -1,7 +1,7 @@
 import math
 import nltk  # used to find edit-distance for user input with all the possible matches in the database
 import mysql.connector
-import operator
+# import operator
 
 
 class Professor:
@@ -100,33 +100,8 @@ class Graph:
         self.prof_name_dict[frm].adjacent[to] = cost
         self.prof_name_dict[to].adjacent[frm] = cost
 
-    # the semantic similarity between two words, may vary depend on the selected database
-    def similarity_score(self, word_1, word_2):
-        if word_1 == word_2:
-            return 1
-        self.npmi_cursor.execute("SELECT id FROM fos WHERE FoS_name = '%s'" % word_1)
-        token1 = self.npmi_cursor.fetchone()
-        if token1 is None:
-            return 0
-        else:
-            token1 = token1[0]
-        self.npmi_cursor.execute("SELECT id FROM fos WHERE FoS_name = '%s'" % word_2)
-        token2 = self.npmi_cursor.fetchone()
-        if token2 is None:
-            return 0
-        else:
-            token2 = token2[0]
-        self.npmi_cursor.execute("SELECT npmi FROM fos_npmi_springer WHERE id1 = %d AND id2 = %d" % (token1, token2))
-        ret = self.npmi_cursor.fetchone()
-        if ret is None:
-            self.npmi_cursor.execute("SELECT npmi FROM fos_npmi_springer WHERE id1 = %d AND id2 = %d" % (token2, token1))
-            ret_alt = self.npmi_cursor.fetchone()
-            if ret_alt is None:
-                return 0
-            return ret_alt[0]
-        return ret[0]
-
-    def print_int_list(self, some_list):
+    @staticmethod
+    def print_int_list(some_list):
         ret = "("
         for i in some_list:
             ret += str(i)
@@ -135,7 +110,8 @@ class Graph:
         ret += ")"
         return ret
 
-    def print_str_list(self, some_list):
+    @staticmethod
+    def print_str_list(some_list):
         ret = "("
         for i in some_list:
             ret += "'"
@@ -200,26 +176,67 @@ class Graph:
             value -= max_factor * prof_node2.get_focus_weight(id2[b])
         return round(value, 3)
 
+    def populate_for_focus(self, focus):
+        id_focus_dict = {}
+        focus_id_dict = {}
+        id_factor_dict = {}
+        prof_factor_dict = {}
+        self.npmi_cursor.execute("SELECT id FROM fos WHERE FoS_name='" + focus + "'")
+        id = self.npmi_cursor.fetchone()
+        if id is None:
+            return {}
+        id = id[0]
+        self.npmi_cursor.execute("SELECT id1, id2, npmi FROM fos_npmi_springer " +
+                                 "WHERE (id1 = " + str(id) + " OR id2 = " + str(id) + " )" +
+                                 "AND npmi > 0.2")
+        triple = self.npmi_cursor.fetchall()
+        id_factor_dict[id] = 1
+        for t in triple:
+            if t[0] == id:
+                id_factor_dict[t[1]] = t[2]
+            else:
+                id_factor_dict[t[0]] = t[2]
+        ids = id_factor_dict.keys()
+        ids = self.print_int_list(ids)
+        self.npmi_cursor.execute("SELECT * FROM fos WHERE id in " + ids)
+        pairs = self.npmi_cursor.fetchall()
+        for p in pairs:
+            id_focus_dict[p[0]] = p[1]
+            focus_id_dict[p[1]] = p[0]
+        focuses = focus_id_dict.keys()
+        focuses = self.print_str_list(focuses)
+        self.fos_cursor.execute("SELECT name, keyword FROM Keywords WHERE keyword in " + focuses)
+        pairs = self.fos_cursor.fetchall()
+        for p in pairs:
+            node = self.get_professor_node(p[0])
+            if p[1] not in node.get_focuses():
+                continue
+            if p[1] not in focus_id_dict:
+                continue
+            factor = id_factor_dict[focus_id_dict[p[1]]]
+            if p[0] in prof_factor_dict:
+                tmp = prof_factor_dict[p[0]]
+                prof_factor_dict[p[0]] = max(factor * node.get_focus_weight(p[1]), tmp)
+            else:
+                prof_factor_dict[p[0]] = factor * node.get_focus_weight(p[1])
+        return prof_factor_dict
+
+    @staticmethod
+    def merge_dicts(dict1, dict2):
+        for k in dict2.keys():
+            if k in dict1:
+                dict1[k] += dict2[k]
+            else:
+                dict1[k] = dict2[k]
+        return dict1
+
     # return a list of (name, int) pairs, sorted based on the int part,
     # larger value means more related to the input focus
     def rank_list_of_professors(self, focuses):
         rank_map = {}
         for focus in focuses:
-            max_similarity = 0.6
-            if focus not in self.focus_to_prof_names_dict.keys():
-                for tmp_focus in self.focus_to_prof_names_dict.keys():
-                    sim_score = self.similarity_score(focus, tmp_focus)
-                    if sim_score > max_similarity:
-                        focus = tmp_focus
-                        max_similarity = sim_score
-                if max_similarity == 0.6:
-                    print("No professor in the database has research topic related to " + focus)
-                    continue
-            for prof in self.focus_to_prof_names_dict[focus]:
-                if prof in rank_map:
-                    rank_map[prof] += max_similarity
-                else:
-                    rank_map[prof] = max_similarity
+            focus_map = self.populate_for_focus(focus)
+            rank_map = self.merge_dicts(rank_map, focus_map)
         rank_list = list(zip(rank_map.keys(), rank_map.values()))
         rank_list.sort(key=lambda x: -x[1])
         return rank_list
@@ -299,6 +316,26 @@ if __name__ == '__main__':
     print("keywords data connected")
     relation_graph = Graph(fos_cursor, npmi_cursor)
     print("relation graph constructed")
-    # print(relation_graph.rank_list_of_professors(["security", "data mining"]))
-    print(relation_graph.related_professors("Thomas S. Huang"))
+
+    # fos_cursor.execute("SELECT keyword FROM Keywords")
+    # rank_list = fos_cursor.fetchall()
+    # for k in rank_list:
+    #     print(k[0])
+    #     rank_map = relation_graph.populate_for_focus(k[0])
+    #     for r in rank_map.keys():
+    #         fos_cursor.execute("INSERT INTO Similar (Keyword, Similar_Prof, Similar_Factor) " +
+    #                            "VALUES ('" + k[0] + "', '" + r + "', " + str(rank_map[r]) + " )")
+    #
+    print(relation_graph.rank_list_of_professors(["security", "data"]))
+
+    # for prof in relation_graph.prof_name_dict.keys():
+    #     relation_list = relation_graph.related_professors(prof)
+    #     for pair in relation_list:
+    #         if pair[0] == prof:
+    #             continue
+    #         fos_cursor.execute("INSERT INTO Related (Prof, Related_Prof, Related_Factor) " +
+    #                            "VALUES ('" + prof + "', '" + pair[0] + "', " + str(pair[1]) + " )")
+    print(relation_graph.related_professors("Jiawei Han"))
+    #
     print(relation_graph)
+    # fos_data.commit()
