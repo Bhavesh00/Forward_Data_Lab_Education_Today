@@ -1,56 +1,4 @@
-from data_process import get_connection, get_raw_data, data_process
-import pickle
-
-
-def load_model():
-    with open('/Users/rp/Desktop/Summer21/Research/Education_today 2/get_homepage_info/text_classifier', 'rb') as training_model:
-        model = pickle.load(training_model)
-
-    with open('/Users/rp/Desktop/Summer21/Research/Education_today 2/get_homepage_info/vectorizer', 'rb') as vect:
-        tfidf_vect = pickle.load(vect)
-    return model, tfidf_vect
-
-
-def predict(url, mode):
-    soup = get_connection(url)
-    raw = get_raw_data(soup)
-    data = data_process(raw, mode=mode)
-    test_vec = vector.transform(data)
-    prediction = model.predict(test_vec)
-    print(url)
-    print("Prediction:", prediction)
-    res = prediction.tolist()
-    for i in range(1, len(res) - 1):
-        if res[i] == 0:
-            if res[i - 1] == res[i + 1] and res[i - 1] in [1, 2, 3, 4]:
-                res[i] = res[i - 1]
-    print("Post-Process", res)
-    for i in range(len(data)):
-        if mode == 'edu':
-            if res[i] == 1:
-                print(data[i], '1')
-        elif mode == 'bio':
-            if res[i] == 2:
-                print(data[i], '2')
-        elif mode == 'research':
-            if res[i] == 3:
-                print(data[i], '3')
-        elif mode == 'award':
-            if res[i] == 4:
-                print(data[i], '4')
-        elif mode == 'all':
-            if res[i] == 1:
-                print(data[i], '1')
-            if res[i] == 2:
-                print(data[i], '2')
-            if res[i] == 3:
-                print(data[i], '3')
-            if res[i] == 4:
-                print(data[i], '4')
-
-
-# List of URL for testing prediction
-test_list = [
+test_list1 = [
     'https://www.cs.princeton.edu/people/profile/dpd',
     'https://www.cs.princeton.edu/people/profile/rdondero',
     'https://www.cs.princeton.edu/people/profile/zdvir',
@@ -214,11 +162,103 @@ test_list = [
     # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/svlevine.html',
     # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/listgarten.html',
     # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/mlustig.html' #
-
 ]
 
-if __name__ == '__main__':
-    model, vector = load_model()
-    mode = input('Enter the mode:')
-    for test in test_list:
-        predict(test, mode)
+
+url_list = [
+    'https://cs.illinois.edu/about/people/all-faculty/zaher',
+    # 'https://cs.illinois.edu/about/people/all-faculty/sadve',
+    # 'https://cs.illinois.edu/about/people/all-faculty/angrave',
+    # 'https://cs.illinois.edu/about/people/all-faculty/mdbailey',
+    # 'https://cs.illinois.edu/about/people/all-faculty/mattox',
+    # 'https://cs.illinois.edu/about/people/all-faculty/nikita',
+    # 'https://cs.illinois.edu/about/people/all-faculty/tbretl'
+    # 'https://cs.illinois.edu/about/people/all-faculty/rhc'
+    # 'https://cs.illinois.edu/about/people/all-faculty/karthe',
+    # 'https://cs.illinois.edu/about/people/all-faculty/kcchang',
+    # 'https://cs.illinois.edu/about/people/all-faculty/dchen',
+    # 'https://cs.illinois.edu/about/people/all-faculty/girishc',
+    # 'https://cs.illinois.edu/about/people/all-faculty/minhdo',
+    # 'https://cs.illinois.edu/about/people/all-faculty/dullerud',
+    # 'https://cs.illinois.edu/about/people/all-faculty/melkebir',
+    # 'https://cs.illinois.edu/about/people/all-faculty/jeffe',
+    # 'https://cs.illinois.edu/about/people/all-faculty/waf',
+    # 'https://cs.illinois.edu/about/people/all-faculty/jugal',
+    # 'https://cs.illinois.edu/about/people/all-faculty/pbg',
+    # 'https://cs.illinois.edu/about/people/all-faculty/mgolpar',
+    # 'https://cs.illinois.edu/about/people/all-faculty/wgropp',
+    # 'https://cs.illinois.edu/about/people/all-faculty/jhasegaw',
+    # 'https://cs.illinois.edu/about/people/all-faculty/kkhauser',
+    # 'https://cs.illinois.edu/about/people/all-faculty/heath',
+    # 'https://cs.illinois.edu/about/people/all-faculty/dhoiem',
+    # 'https://cs.illinois.edu/about/people/all-faculty/jianh',
+    # 'https://cs.illinois.edu/about/people/all-faculty/w-hwu',
+    # 'https://cs.illinois.edu/about/people/all-faculty/rkiyer',
+    # 'https://cs.illinois.edu/about/people/all-faculty/hengji',
+    # 'https://cs.illinois.edu/about/people/all-faculty/jiang56',
+    # 'https://www.cs.princeton.edu/people/profile/tomg',
+    # 'https://www.cs.princeton.edu/people/profile/aartig',
+    # 'https://www.cs.princeton.edu/people/profile/ehazan',
+    # 'https://www.cs.princeton.edu/people/profile/fheide',
+    # 'https://www.cs.princeton.edu/people/profile/kylej',
+    # 'https://www.cs.princeton.edu/people/profile/ak18',
+    # 'https://www.cs.princeton.edu/people/profile/bwk',
+    # 'https://www.cs.princeton.edu/people/profile/zkincaid',
+    # 'https://www.cs.princeton.edu/people/profile/gkol',
+    # 'https://www.cs.princeton.edu/people/profile/aalevy',
+    # 'https://www.cs.princeton.edu/people/profile/dl9',
+    # 'https://www.cs.princeton.edu/people/profile/appel',
+    # 'https://www.cs.princeton.edu/people/profile/dpd',
+    # 'https://www.cs.princeton.edu/people/profile/rdondero',
+    # 'https://www.cs.princeton.edu/people/profile/zdvir',
+    # 'https://www.cs.princeton.edu/people/profile/bee',
+    # 'https://www.cs.princeton.edu/people/profile/fellbaum',
+    # 'https://www.cs.princeton.edu/people/profile/felten',
+    # 'https://www.cs.princeton.edu/people/profile/af',
+    # 'https://www.cs.princeton.edu/people/profile/rfish',
+    # 'https://www.cs.princeton.edu/people/profile/mfreed',
+    # 'https://www.cs.princeton.edu/people/profile/maia',
+
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/abbeel.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/asanovic.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/ayazifar.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/bachrach.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/bajcsy.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/mball.html', #
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/dbamman.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/barsky.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/bartlett.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/bayen.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/blum.html', #
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/borgs.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/brewer.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/aydin.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/canny.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/jchayes.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/akcheung.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/alexch.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/clancy.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/colella.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/ncrooks.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/culler.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/darrell.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/demmel.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/denero.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/anca.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/prabal.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/efros.html', #
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/elghaoui.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/hfarid.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/harrison.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/hartmann.html', #
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/harvey.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/hearst.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/hellerstein.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/hilfinger.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/joshhug.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/nilah.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/jiantao.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/jordan.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/joseph.html',
+    # 'https://www2.eecs.berkeley.edu/Faculty/Homepages/kahan.html'
+]
