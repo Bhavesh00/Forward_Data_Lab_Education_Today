@@ -1,7 +1,7 @@
 """
-Knowledge Base Reference: https://www.kaggle.com/Cornell-University/arxiv
-
 This module crawls publication and professor data from the arXiv knowledge base.
+
+Knowledge Base Reference: https://www.kaggle.com/Cornell-University/arxiv
 """
 
 import pandas as pd
@@ -26,18 +26,12 @@ def crawl(professor, university):
     for ind, paper in enumerate(metadata):
         paper = json.loads(paper)
         tempDict = {}
+        
         if professor == paper['submitter'] or abNameFormat(professor) in paper['authors']:
             tempDict['title'] = paper['title']
             tempDict['authors'] = paper['authors']
             tempDict['abstract'] = paper['abstract']
             tempDict['doi'] = paper['doi']
-
-            """
-            print(paper['title'])
-            print(paper['authors'])
-            print(paper['abstract'])
-            print(paper['doi'])
-            """
          
         publications = publications.append(tempDict, ignore_index=True)
     

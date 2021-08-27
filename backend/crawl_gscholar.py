@@ -1,4 +1,6 @@
-# This program extracts professor and publication data from Google Scholar.
+""" 
+This program extracts professor and publication data from Google Scholar. https://scholar.google.com/  
+"""
 
 from googlesearch import search
 import requests
@@ -6,120 +8,93 @@ from bs4 import BeautifulSoup as bs
 import html2text
 import io
 import sys
+import pandas as pd
 import json
 from getpass import getpass
 from mysql.connector import connect, Error
+import time
 
 
-# This function converts the HTML of the professor pages into local text files for analysis
-def htmlToText(search_query):
+# This function takes in the name of a professor and a university.
+# Returns a dataframe containing the publication title, publication authors, publication abstract, and publication DOI 
+# of the publications associated with the professor from the given university.
+def crawl(professor, university):
     # Reconfigure the encoding to avoid issues
     sys.stdin.reconfigure(encoding='utf-8')
     sys.stdout.reconfigure(encoding='utf-8')
 
     # Initialization
-    list = search(search_query, 10, "en")
-    urls = []
-
-    # Finding List of Google search URL's that have .org, .edu, or scholar.google in the URL
-    for i in range(len(list)):
-        if ".edu" in list[i] or ".org" in list[i] or "scholar.google" in list[i]:
-            urls.append(list[i])
-    # print(urls)
-
-    # Converting the HTML content for each page into separate text files
-    count = 0
-    for url in urls:
-        # Accessing the Webpage
-        page = requests.get(url)
-
-        # Getting the webpage's content in pure html
-        soup = bs(page.content, features="lxml")
-
-        # Convert HTML into easy-to-read plain ASCII text
-        clean_html = html2text.html2text(soup.prettify())
-        file_name = "site" + str(count) + ".txt"
-        count += 1
-        with io.open(file_name, "w", encoding="utf-8") as temp_file:
-            temp_file.write(clean_html)
-            temp_file.close()
-
-
-# This function returns the publications' URL and Title as JSON strings. It also INSERTS the data into the database.
-def getPublicationUrlAndTitle(search_query):
-    # Reconfigure the encoding to avoid issues
-    sys.stdin.reconfigure(encoding='utf-8')
-    sys.stdout.reconfigure(encoding='utf-8')
-
-    # Initialization
+    search_query = professor + ", " + university
     list = search(search_query, 10, "en") # Google search results
-    urls = []
-    publications = []
+    google_urls = []
+    publications_urls = []
     publications_titles = []
-    professor = search_query.split(", ")[0]
-    institution = search_query.split(", ")[1]
+    publications_authors = []
+    publications_abstracts = []
+    publication_citations = []
+
+    column_names = ["title", "authors", "abstract", "doi", "citations"]
+    publications = pd.DataFrame(columns = column_names)
 
     # Finding List of Google search URL's that have .org, .edu, or scholar.google in the URL
     for i in range(len(list)):
         if ".edu" in list[i] or ".org" in list[i] or "scholar.google" in list[i]:
-            urls.append(list[i])
-    # print(urls)
+            google_urls.append(list[i])
 
-    # Converting the HTML content for each page into separate text files
-    count = 0
-    for url in urls:
+    # Loop through google search URL's
+    for url in google_urls:
         # Accessing the Webpage
         page = requests.get(url)
 
         # Getting the webpage's content in pure html
         soup = bs(page.content, features="lxml")
 
-        # Extracting Abstract Link from Google Scholar
+        # Extracting Abstract Links from Google Scholar
         if "scholar.google" in url:
             print("Google Scholar Publication: " + url)
             for link in soup.find_all(["a"], "gsc_a_at"):
                 # Potential Error as the tag changes to data-href on some browsers:
                 # print(link.get('data-href'))
                 if link.get('href') is not None:
-                    publications.append("https://scholar.google.com" + link.get('href'))
-                    publications_titles.append(link.text)
+                    publications_urls.append("https://scholar.google.com" + link.get('href'))
+                    # publications_titles.append(link.text)
 
-    # Convert Python arrays to JSON strings
-    # jsonStrUrls = json.dumps(publications)
-    # print(jsonStrUrls)
-    # jsonStrPublicationTitles = json.dumps(publications_titles)
-    # print(publications_titles)
+    print(publications_urls)
+    
+    # TODO: Need to still handle case where an author's publication list spans multiple pages on Google Scholar
+    for url in publications_urls:
+        # Accessing the Webpage
+        page = requests.get(url)
 
-    # Print out the publication titles and url's for the professor.
-    # for x in range(len(publications)):
-    #     print(publications_titles[x])
-    #     print(publications[x])
+        print("accessed")
 
-    # Push the publications individually to the publications table on MySQL
-    try:
-        with connect(
-                host="104.198.163.126",
-                user="root",
-                password="yEBpALG6zHDoCFLn",
-                database='project'
+        # Getting the webpage's content in pure html
+        soup = bs(page.content, features="lxml")
+    
+        # Get Publication Title
+        title = soup.find(["a"], "gsc_oci_title_link")
+        print(title.text)
+        publications_titles.append(title.text)
+        print(len(publications_titles))
 
-        ) as connection:
-            mycursor = connection.cursor()
-            sql = "INSERT IGNORE INTO Publication (title, name, institution, url) VALUES (%s, %s, %s, %s)"
+        # Get Publication Authors
+        # authors = 
+        # publications_authors
 
-            for x in range(len(publications)):
-                val = (publications_titles[x], professor, institution, publications[x])
-                mycursor.execute(sql, val)
 
-            connection.commit()
-            connection.close()
+        # Get Publication Abstracts
+        # abstract = soup.find_all(class_="gsh_small")
+        # print(abstract)
+        # publications_abstracts
 
-    except Error as e:
-        print(e)
+        # Get Number of Citations
+        # num_citations = 
+        # publications_citations
 
-    return publications
+
+
+    return
 
 
 # search_query = "Jiawei Han, University of Illinois at Urbana-Champaign"
-# htmlToText(search_query)
-# getPublicationUrlAndTitle(search_query)
+crawl("Jiawei Han", "University of Illinois at Urbana-Champaign")

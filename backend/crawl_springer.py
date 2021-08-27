@@ -1,5 +1,7 @@
 """
 This module crawls publication data from the springer knowledge base.
+
+Knowledge Base Reference: https://dev.springernature.com/example-metadata-response 
 """
 import requests
 import pandas as pd
@@ -14,6 +16,7 @@ def crawl(professor, university):
     publications = pd.DataFrame(columns = column_names)
     response = requests.get("http://api.springernature.com/meta/v2/json?q=name:" + professor.replace(" ", "+") + "&api_key=" + api_key)
     metadata = json.loads(response.text)
+    
     for pub in metadata['records']:
         tempDict = {}
         # Check if the queried Professor is actually a creator of the publications in the API results
@@ -32,8 +35,10 @@ def crawl(professor, university):
 def checkCreator(professor, creators):
     for x in range(len(creators)):
         name = creatorToString(creators[x]["creator"])
+        
         if (professor == name):   
            return True
+    
     return False
 
 # This function takes in a single creator name and formats it so that it is in (First Name Last Name) format.
@@ -57,8 +62,10 @@ def creatorToString(creator_name):
 # This function takes in a list of creators given by Springer, and returns a comma separated string of all the creators.
 def creatorsListToString(creators_list):
     temp = ""
+    
     for x in range(len(creators_list)):
         temp += creatorToString(creators_list[x]["creator"])
+        
         if (x != len(creators_list) - 1):
             temp += ", "
 
