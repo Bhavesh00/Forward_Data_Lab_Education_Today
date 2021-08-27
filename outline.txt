@@ -1,0 +1,18 @@
+- Input a list of (name, institution).
+
+- Crawler: Collect data -- Rohan,Bhavesh
+    - Go to Google. Search (name,institution). Filter results --> URLs that are faculty homepages.
+
+    - Go through each page. Extract information: Biography, Education, Awards, Research interests, Publications
+    
+    - Build a console, allow for human operator to validate/correct data 
+
+- Data Mining -- Chen, Haoxiang
+    - Generate keywords for each professor (from publications). 
+    - Link them in a graph (by matching keywords).
+- Search system -- Together
+    - Allow users to search professors by keywords
+    - Return a rank list of professors
+    - When user clicks on a professor, it shows a result page with details of this professor.
+
+- Two Weeks -- to have a complete end-to-end, with some subroutines hard-coded. Interface/function should be complete. (-July 2nd-)   
