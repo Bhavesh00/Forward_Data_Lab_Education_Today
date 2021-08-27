@@ -44,7 +44,7 @@ def crawl(professor, university):
     return publications
 
 
-# This function converts the professor name (First Name Last Name) into (First Initial, Middle Initial, Last Name format) 
+# This function converts the professor name (First Name Last Name) into (First Initial, Middle Initial, Last Name) format
 # and returns this string. This function will be used to match the author name formatting in the arXiv dataset.
 def abNameFormat(professor):
     list = professor.split()
@@ -59,6 +59,8 @@ def abNameFormat(professor):
     temp += list[-1].title()
       
     return temp.strip()
+
+
 
 # crawl("", "")
 # print(abNameFormat("Peter A Stuart"))
