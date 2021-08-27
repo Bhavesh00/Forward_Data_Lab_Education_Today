@@ -1,71 +1,64 @@
 """
 Knowledge Base Reference: https://www.kaggle.com/Cornell-University/arxiv
+
+This module crawls publication and professor data from the arXiv knowledge base.
 """
 
 import pandas as pd
 import json
 from collections import Counter, defaultdict
-from tqdm.notebook import tqdm
 
 def get_metadata():
     # Make Relative Paths (https://stackoverflow.com/questions/918154/relative-paths-in-python)
-    with open('/Users/bhave/Desktop/Forward_Data_Lab_Education_Today/backend/data/arxiv-metadata-oai-snapshot.json') as f:
+    with open('/Users/bhavesh/Forward_Data_Lab_Education_Today/data/arxiv-metadata-oai-snapshot.json') as f:
         for line in f:
             yield line
 
+# This function takes in the name of a professor and a university.
+# This function returns a dataframe containing the publication title, publication authors, publication abstract, and publication DOI 
+# of the publications associated with the professor from the given university.
+def crawl(professor, university):
+    # DataFrame
+    metadata = get_metadata()
+    column_names = ["title", "authors", "abstract", "doi"]
+    publications = pd.DataFrame(columns = column_names)
 
-metadata = get_metadata()
+    for ind, paper in enumerate(metadata):
+        paper = json.loads(paper)
+        tempDict = {}
+        if professor == paper['submitter'] or abNameFormat(professor) in paper['authors']:
+            tempDict['title'] = paper['title']
+            tempDict['authors'] = paper['authors']
+            tempDict['abstract'] = paper['abstract']
+            tempDict['doi'] = paper['doi']
 
-for paper in metadata:
-    first_paper = json.loads(paper)
-    break
-
-
-for key in first_paper:
-    print(key)
-
-
-for key in first_paper:
-    if key != 'abstract':
-        print(first_paper[key])
-
-print(first_paper['authors'])
-print(first_paper['authors_parsed'])
-print(first_paper['doi'])
-
-
-# DataFrame
-column_names = ["ids", "jref","doi", "title","submitter"]
-dfOut = pd.DataFrame(columns = column_names)
+            """
+            print(paper['title'])
+            print(paper['authors'])
+            print(paper['abstract'])
+            print(paper['doi'])
+            """
+         
+        publications = publications.append(tempDict, ignore_index=True)
+    
+    return publications
 
 
-ids = []
-jref = []
-doi = []
-title = []
-submit = []
+# This function converts the professor name (First Name Last Name) into (First Initial, Middle Initial, Last Name format) 
+# and returns this string. This function will be used to match the author name formatting in the arXiv dataset.
+def abNameFormat(professor):
+    list = professor.split()
+    temp = ""
 
-metadata = get_metadata()
-n_journal_publicated = 0
+    for i in range(len(list) - 1):
+        s = list[i]
+          
+        # Adds the capital first character 
+        temp += (s[0].upper()+'. ')
+          
+    temp += list[-1].title()
+      
+    return temp.strip()
 
-for ind, paper in enumerate(metadata):
-    paper = json.loads(paper)
-    if paper['journal-ref'] != None:
-        #tempDict = {}
-        n_journal_publicated += 1
-        #tempDict['ids'] = paper['id']
-        #tempDict['jref'] = paper['journal-ref']
-        #tempDict['doi'] = paper['doi']
-        #tempDict['title'] = paper['title']
-        #tempDict['submitter'] = paper['submitter']
-        
-        ids.append(paper['id'])
-        jref.append(paper['journal-ref'])
-        doi.append(paper['doi'])
-        title.append(paper['title'])
-        submit.append(paper['submitter'])
-        
-        
-        #dfOut = dfOut.append(tempDict, ignore_index=True)
-
-print(f'Number of papers publicated in journals is: {n_journal_publicated}')
+# crawl("", "")
+# print(abNameFormat("Peter A Stuart"))
