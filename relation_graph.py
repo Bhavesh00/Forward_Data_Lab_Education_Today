@@ -1,7 +1,28 @@
 import math
 import nltk  # used to find edit-distance for user input with all the possible matches in the database
 import mysql.connector
-# import operator
+import operator
+
+
+def print_int_list(some_list):
+    ret = "("
+    for i in some_list:
+        ret += str(i)
+        ret += ","
+    ret = ret[:-1]
+    ret += ")"
+    return ret
+
+
+def print_str_list(some_list):
+    ret = "("
+    for i in some_list:
+        ret += "'"
+        ret += i
+        ret += "',"
+    ret = ret[:-1]
+    ret += ")"
+    return ret
 
 
 class Professor:
@@ -11,10 +32,14 @@ class Professor:
         self.focus_to_weight_dict = self.update_to_standard_dict(dict_of_focus_to_weight.copy())
         self.adjacent = {}  # neighbor node  ->  edge weight
 
-    @staticmethod  # so the sum of all the weights of key-words for a professor is 100
+        # so the sum of all the weights of key-words for a professor is 100
+
+    @staticmethod  # And we only consider the top ten weighted keywords
     def update_to_standard_dict(diction):
-        # opt_dict = dict(sorted(diction.items(), key=operator.itemgetter(1), reverse=True)[:10])
-        opt_dict = diction.copy()
+        if len(diction) <= 10:
+            opt_dict = diction.copy()
+        else:
+            opt_dict = dict(sorted(diction.items(), key=operator.itemgetter(1), reverse=True)[:10])
         total = sum(opt_dict.values())
         for k in opt_dict.keys():
             opt_dict[k] = opt_dict[k] / total
@@ -100,42 +125,21 @@ class Graph:
         self.prof_name_dict[frm].adjacent[to] = cost
         self.prof_name_dict[to].adjacent[frm] = cost
 
-    @staticmethod
-    def print_int_list(some_list):
-        ret = "("
-        for i in some_list:
-            ret += str(i)
-            ret += ","
-        ret = ret[:-1]
-        ret += ")"
-        return ret
-
-    @staticmethod
-    def print_str_list(some_list):
-        ret = "("
-        for i in some_list:
-            ret += "'"
-            ret += i
-            ret += "',"
-        ret = ret[:-1]
-        ret += ")"
-        return ret
-
     # return the distance between two professor nodes based on their key words
     def calc_distance(self, prof_node1, prof_node2):
         value = 200
         focus1 = prof_node1.get_focuses()
         focus2 = prof_node2.get_focuses()
-        focus1_list = self.print_str_list(focus1)
-        focus2_list = self.print_str_list(focus2)
+        focus1_list = print_str_list(focus1)
+        focus2_list = print_str_list(focus2)
         self.npmi_cursor.execute("SELECT * FROM fos WHERE FoS_name in " + focus1_list)
         id1 = self.npmi_cursor.fetchall()
         self.npmi_cursor.execute("SELECT * FROM fos WHERE FoS_name in " + focus2_list)
         id2 = self.npmi_cursor.fetchall()
         id1 = {a[0]: a[1] for a in id1}
         id2 = {a[0]: a[1] for a in id2}
-        id1_list = self.print_int_list(id1.keys())
-        id2_list = self.print_int_list(id2.keys())
+        id1_list = print_int_list(id1.keys())
+        id2_list = print_int_list(id2.keys())
         self.npmi_cursor.execute("SELECT id1, id2, npmi FROM fos_npmi_springer " +
                                  "WHERE (id1 in " + id1_list + " AND id2 in " + id2_list + " )")
         sim_pairs = self.npmi_cursor.fetchall()
@@ -197,14 +201,14 @@ class Graph:
             else:
                 id_factor_dict[t[0]] = t[2]
         ids = id_factor_dict.keys()
-        ids = self.print_int_list(ids)
+        ids = print_int_list(ids)
         self.npmi_cursor.execute("SELECT * FROM fos WHERE id in " + ids)
         pairs = self.npmi_cursor.fetchall()
         for p in pairs:
             id_focus_dict[p[0]] = p[1]
             focus_id_dict[p[1]] = p[0]
         focuses = focus_id_dict.keys()
-        focuses = self.print_str_list(focuses)
+        focuses = print_str_list(focuses)
         self.fos_cursor.execute("SELECT name, keyword FROM Keywords WHERE keyword in " + focuses)
         pairs = self.fos_cursor.fetchall()
         for p in pairs:
@@ -317,6 +321,8 @@ if __name__ == '__main__':
     relation_graph = Graph(fos_cursor, npmi_cursor)
     print("relation graph constructed")
 
+    # to populate the website database, uncomment the following codes:
+    #
     # fos_cursor.execute("SELECT keyword FROM Keywords")
     # rank_list = fos_cursor.fetchall()
     # for k in rank_list:
@@ -328,6 +334,8 @@ if __name__ == '__main__':
     #
     print(relation_graph.rank_list_of_professors(["security", "data"]))
 
+    # to populate the website database, uncomment the following codes:
+    #
     # for prof in relation_graph.prof_name_dict.keys():
     #     relation_list = relation_graph.related_professors(prof)
     #     for pair in relation_list:
