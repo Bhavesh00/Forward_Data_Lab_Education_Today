@@ -10,7 +10,8 @@ from collections import Counter, defaultdict
 
 def get_metadata():
     # Make Relative Paths (https://stackoverflow.com/questions/918154/relative-paths-in-python)
-    with open('/Users/bhavesh/Forward_Data_Lab_Education_Today/data/arxiv-metadata-oai-snapshot.json') as f:
+    # /Users/bhave/Desktop/Forward_Data_Lab_Education_Today/backend/data/arxiv-metadata-oai-snapshot.json
+    with open('/Users/bhave/Desktop/Forward_Data_Lab_Education_Today/backend/data/arxiv-metadata-oai-snapshot.json') as f:
         for line in f:
             yield line
 
@@ -20,7 +21,7 @@ def get_metadata():
 def crawl(professor, university):
     # DataFrame
     metadata = get_metadata()
-    column_names = ["title", "authors", "abstract", "doi"]
+    column_names = ["title", "authors", "abstract", "doi", "citations"]
     publications = pd.DataFrame(columns = column_names)
 
     for ind, paper in enumerate(metadata):

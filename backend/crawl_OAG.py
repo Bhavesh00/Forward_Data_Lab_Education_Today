@@ -1,4 +1,6 @@
-# This program extracts professor and publication data from Microsoft Open Academic Graph (OAG) Knowledge Base.
+""" 
+This program extracts professor and publication data from Microsoft Open Academic Graph (OAG) Knowledge Base.
+""" 
 
 from googlesearch import search
 import requests
@@ -9,63 +11,148 @@ import sys
 import json
 from getpass import getpass
 from mysql.connector import connect, Error
+import pandas as pd
 
-
-# Push the publications individually to the publications table on MySQL
-# search_query is in the format (professor, university)
-def getPublicationAuthorAndTitle(search_query):
-
-    # Initialization
-    publications = []
-    publications_titles = []
-    keywords = {} # Dictionary that has publication title as key and keywords as the value
-    professor = search_query.split(", ")[0]
-    institution = search_query.split(", ")[1]
-    urls = []
-
-    # Open aminer papers
-    aminer_file_authors  = open("aminer_authors.txt")
-    aminer_file_papers  = open(aminer_papers.txt)
-
-    aminer_data_authors = json.load(aminer_file_authors)
-    aminer_data_papers = json.load(aminer_file_papers)
+def containsProfessor(authors_list, professor):
+    # "authors": [{"name": "\u8d3a\u51e4\u971e", "id": "2404364408"}]"
+    for x in authors_list:
+        if "name" in x:
+            if professor in x["name"]:
+                return True
     
-    for x in aminer_data_papers:
-        if not x["title"]  in publications_titles:
-            publications_titles.append(x["title"])
-            urls.append(x['url'][0]) # Check if exists to avoid potential error.
-            keywords[x["titles"]] = x["keywords"]
+    return False
+
+# authors_list = [{"name": "\u8d3a\u51e4\u971e", "id": "2404364408"}]
+# containsProfessor(authors_list, "")
+
+def authorsToString(authors_list):
+    temp = ""
+    for x in range(len(authors_list)):
+        temp += authors_list[x]["name"]
+
+        if (x != len(authors_list) - 1):
+            temp += ", "
+    return temp
+
+def crawl(professor, university):
+    column_names = ["title", "authors", "abstract", "doi", "citations"]
+    publications = pd.DataFrame(columns = column_names)
+    aminer = crawl_aminer(professor, university)
+    mag = crawl_mag(professor, university)
+    publications.append(aminer)
+    publications.append(mag)
+
+def crawl_aminer(professor, university):
+    column_names = ["title", "authors", "abstract", "doi", "citations"]
+    publications = pd.DataFrame(columns = column_names)
+
+    # Open aminer files
+    aminer_file_papers = open("backend/data/aminer_papers_12.txt", 'r')
+
+    # Loop through Aminer file.
+    while True:
+        # Get next line from file
+        line = aminer_file_papers.readline()
+    
+        # if line is empty end of file is reached
+        if not line:
+            break
+
+        # Load the line into json
+        pub_json = json.loads(line)
+        tempDict = {}   
+
+        # print(pub_json["authors"])
+        if containsProfessor(pub_json["authors"], professor):
+            # author.org (check if this contains query university)
+
+            if "authors" in pub_json:
+                tempDict["authors"] = authorsToString(pub_json["authors"])
+            else:
+                tempDict["authors"] = ""
+
+            if "title" in pub_json:
+                tempDict["title"] = pub_json["title"]
+            else:
+                tempDict["title"] = ""
+            
+            if "abstract" in pub_json:
+                tempDict["abstract"] = pub_json["abstract"]
+            else:
+                tempDict["abstract"] = ""
+            
+            if "doi" in pub_json:
+                # print(pub_json["doi"])
+                tempDict["doi"] = pub_json["doi"]
+            else:
+                tempDict["doi"] = ""
+            
+            if "citations" in pub_json:
+                tempDict["citations"] = pub_json["n_citation"]
+            else:
+                tempDict["citations"] = ""
+            
+            publications.append(tempDict, ignore_index="True")
+            print(tempDict)
+    
+    return publications
 
 
-    # Open mag papers 
-    mag_file_authors  = open(mag_authors.txt)
-    mag_file_papers  = open(mag_papers.txt)
+def crawl_mag(professor, university):
+    column_names = ["title", "authors", "abstract", "doi", "citations"]
+    publications = pd.DataFrame(columns = column_names)
 
-    for x in mag_data_papers:
-        if not x["title"]  in publications_titles:
-            publications_titles.append(x["title"])
-            urls.append(x['url'][0]) # Check if exists to avoid potential error.
-            keywords[x["titles"]] = x["keywords"]
+    # Open mag files
+    mag_file_papers = open("backend/data/mag_papers_10.txt", 'r')
 
-    try:
-        with connect(
-                host="35.225.165.28",
-                user="root",
-                password="gB4zpufPpuvK7yEf",
-                database='fwddata'
+    # Loop through Aminer file.
+    while True:
+        # Get next line from file
+        line = mag_file_papers.readline()
+    
+        # if line is empty end of file is reached
+        if not line:
+            break
 
-        ) as connection:
-            mycursor = connection.cursor()
-            sql = "INSERT IGNORE INTO Publication (title, name, institution, url) VALUES (%s, %s, %s, %s)"
+        # Load the line into json
+        pub_json = json.loads(line)
+        tempDict = {}   
 
-            for x in range(len(publications)):
-                val = (publications_titles[x], professor, institution, publications[x])
-                mycursor.execute(sql, val)
+        # print(pub_json["authors"])
+        if containsProfessor(pub_json["authors"], professor):
+            # author.org (check if this contains query university)
 
-            connection.commit()
-            connection.close()
+            if "authors" in pub_json:
+                tempDict["authors"] = authorsToString(pub_json["authors"])
+            else:
+                tempDict["authors"] = ""
 
-    except Error as e:
-        print(e)
+            if "title" in pub_json:
+                tempDict["title"] = pub_json["title"]
+            else:
+                tempDict["title"] = ""
+            
+            if "abstract" in pub_json:
+                tempDict["abstract"] = pub_json["abstract"]
+            else:
+                tempDict["abstract"] = ""
+            
+            if "doi" in pub_json:
+                # print(pub_json["doi"])
+                tempDict["doi"] = pub_json["doi"]
+            else:
+                tempDict["doi"] = ""
+            
+            if "citations" in pub_json:
+                tempDict["citations"] = pub_json["n_citation"]
+            else:
+                tempDict["citations"] = ""
+            
+            publications.append(tempDict, ignore_index="True")
+            print(tempDict)
 
     return publications
+
+
+# crawl_aminer("carolina galais", "")
+# crawl_mag("A. Hrynkiewicz", "")

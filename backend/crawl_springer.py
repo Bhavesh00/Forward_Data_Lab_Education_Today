@@ -12,7 +12,7 @@ api_key = "e04afc19febd3700b686b4afade1c7db"
 # Returns a dataframe containing the publication title, publication authors, publication abstract, and publication DOI 
 # of the publications associated with the professor from the given university.
 def crawl(professor, university):
-    column_names = ["title", "authors", "abstract", "doi"]
+    column_names = ["title", "authors", "abstract", "doi", "citations"]
     publications = pd.DataFrame(columns = column_names)
     response = requests.get("http://api.springernature.com/meta/v2/json?q=name:" + professor.replace(" ", "+") + "&api_key=" + api_key)
     metadata = json.loads(response.text)
@@ -25,6 +25,7 @@ def crawl(professor, university):
             tempDict['authors'] = creatorsListToString(pub['creators']) # Convert list creators to comma separated string
             tempDict['abstract'] = pub['abstract']
             tempDict['doi'] = pub['doi']
+            tempDict["citations"] = 0
 
         publications = publications.append(tempDict, ignore_index=True)
         
