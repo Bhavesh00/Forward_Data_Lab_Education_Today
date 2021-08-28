@@ -4,7 +4,7 @@
 
 My portion of the software system works to uncover and extract useful information about a given professor. I look to capture Research, Biography, Award, & Education information from a select number of professor 'homepages'.
 
-##### The pipeline can be run independently by executing \V2\main.py
+##### The pipeline can be run independently by executing **\V2\main.py**
 
 #### Homepage Finding
 - Pulls 3 viable urls to be used for data extraction
