@@ -59,8 +59,8 @@ print(accuracy_score(prediction, test_y))
 
 # Save classification model and vectorizer model
 
-with open('text_classifier', 'wb') as picklefile:
+with open('Models/text_classifier', 'wb') as picklefile:
     pickle.dump(classifier, picklefile)
 
-with open('vectorizer', 'wb') as picklefile:
+with open('Models/vectorizer', 'wb') as picklefile:
     pickle.dump(TFIDF, picklefile)
