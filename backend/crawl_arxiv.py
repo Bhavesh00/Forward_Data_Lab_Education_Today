@@ -28,12 +28,12 @@ def crawl(professor, university):
         paper = json.loads(paper)
         tempDict = {}
         
-        if professor == paper['submitter'] or abNameFormat(professor) in paper['authors']:
+        if professor.lower() == paper['submitter'].lower():
             tempDict['title'] = paper['title']
             tempDict['authors'] = paper['authors']
             tempDict['abstract'] = paper['abstract']
             tempDict['doi'] = paper['doi']
-         
+        
         publications = publications.append(tempDict, ignore_index=True)
     
     return publications
@@ -42,6 +42,9 @@ def crawl(professor, university):
 # This function converts the professor name (First Name Last Name) into (First Initial, Middle Initial, Last Name) format
 # and returns this string. This function will be used to match the author name formatting in the arXiv dataset.
 def abNameFormat(professor):
+    if (professor == ""):
+        return ""
+
     list = professor.split()
     temp = ""
 
@@ -57,5 +60,6 @@ def abNameFormat(professor):
 
 
 
-# crawl("", "")
+crawl("", "")
 # print(abNameFormat("Peter A Stuart"))
+# crawl("Jiawei Han", "University of Illinois at Urbana-Champaign")

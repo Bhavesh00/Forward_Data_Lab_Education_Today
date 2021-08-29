@@ -37,7 +37,7 @@ def checkCreator(professor, creators):
     for x in range(len(creators)):
         name = creatorToString(creators[x]["creator"])
         
-        if (professor == name):   
+        if (professor.lower() == name.lower()):   
            return True
     
     return False

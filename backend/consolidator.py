@@ -19,25 +19,52 @@ import json
 # Handles conflict information
 # Returns publication data and professor information
 def consolidate(professor, university):
-    # Add Edit Distance Function based on titles
+    # Add Edit Distance Function based on titles to remove duplicates. Utilize 
     column_names = ["title", "authors", "abstract", "doi", "citations"]
     publications = pd.DataFrame(columns = column_names)
-    arxiv_publications = arxiv.crawl(professor, university)
-    springer_publications = springer.crawl(professor, university)
-    # gscholar_publications = gscholar.crawl(professor, university)
-    # oag_publications = oag.crawl(professor, university)
 
+    arxiv_publications = arxiv.crawl(professor, university)
+    print("Arxiv crawling complete")
+    print(arxiv_publications)
+
+    springer_publications = springer.crawl(professor, university)
+    print("Springer crawling complete")
+    print(springer_publications)
+
+    mag_publications = oag.crawl_mag(professor, university)
+    print("MAG crawling complete")
+    print(mag_publications)
+
+    aminer_publications = oag.crawl_aminer(professor, university)
+    print("Aminer crawling complete")
+    print(aminer_publications)
+    # gscholar_publications = gscholar.crawl(professor, university)
+    
     publications.append(arxiv_publications)
     publications.append(springer_publications)
+    publications.append(mag_publications)
+    publications.append(aminer_publications)
     # publications.append(gscholar_publications)
-    # publications.append(oag_publications)
     
-
     return publications
+
+# This function removes duplicate entries in the publication dataframe based on DOI #'s and title names.
+# Takes in publications dataframe
+# Removes duplicates based on title and doi columns
+# Returns updated publications dataframe.
+def removeDuplicates(publications):
+    publications = publications.drop_duplicates(subset=['title', 'doi'])
+    return publications
+
 
 publications = consolidate("Jiawei Han", "University of Illinois at Urbana-Champaign")
 print(publications)
 
 
+"""
 publications = consolidate("Yoshua Bengio", "University of Montreal")
 print(publications)
+
+publications = consolidate("carolina galais", "UAB")
+print(publications)
+"""

@@ -17,13 +17,10 @@ def containsProfessor(authors_list, professor):
     # "authors": [{"name": "\u8d3a\u51e4\u971e", "id": "2404364408"}]"
     for x in authors_list:
         if "name" in x:
-            if professor in x["name"]:
+            if professor.lower() in x["name"].lower():
                 return True
     
     return False
-
-# authors_list = [{"name": "\u8d3a\u51e4\u971e", "id": "2404364408"}]
-# containsProfessor(authors_list, "")
 
 def authorsToString(authors_list):
     temp = ""
@@ -41,6 +38,7 @@ def crawl(professor, university):
     mag = crawl_mag(professor, university)
     publications.append(aminer)
     publications.append(mag)
+    return publications
 
 def crawl_aminer(professor, university):
     column_names = ["title", "authors", "abstract", "doi", "citations"]
@@ -156,3 +154,4 @@ def crawl_mag(professor, university):
 
 # crawl_aminer("carolina galais", "")
 # crawl_mag("A. Hrynkiewicz", "")
+# crawl("A. Hrynkiewicz", "")
