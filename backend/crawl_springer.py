@@ -116,6 +116,6 @@ def test_springer():
     assert "Capillary electroosmosis properties of water lubricants with different electroosmotic additives under a steel-on-steel sliding interface" in publicationsTwo.values
     assert "The process of lubricant penetration into frictional interfaces has not been fully established, hence compromising their tribological performance. In this study, the penetration characteristics of deionized water (DI water) containing an electroosmotic suppressant (cetyltrimethylammonium bromide (CTAB)) and an electroosmotic promoter (sodium lauriminodipropionate (SLI)), were investigated using steel-on-steel friction pairs. The results indicated that the lubricant with electroosmotic promoter reduced the coefficient of friction and wear scar diameter, whereas that with an electroosmotic suppressant exhibited an opposite behavior compared with DI water. The addition of SLI promoted the penetration of the DI water solution, thus resulting in the formation of a thick lubricating film of iron oxide at the sliding surface. This effectively reduced the abrasion damage, leading to a lower coefficient of friction and wear loss." in publicationsTwo.values
 
-    print("All Springer tests passed.")
+    print("All Springer Crawler tests passed.")
 
 # test_springer()

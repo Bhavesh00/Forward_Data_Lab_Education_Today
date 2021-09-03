@@ -107,5 +107,15 @@ def crawl(professor, university):
 
     return publications
 
-# search_query = "Jiawei Han, University of Illinois at Urbana-Champaign"
-# crawl("Jiawei Han", "University of Illinois at Urbana-Champaign")
+def test_gscholar():
+    publications = crawl("Jiawei Han", "University of Illinois at Urbana-Champaign")
+    assert "Data mining: concepts and techniques" in publications.values
+    assert "Mining frequent patterns without candidate generation: A frequent-pattern tree approach" in publications.values
+
+    publicationsTwo = crawl("Gul Agha", "University of Illinois at Urbana-Champaign")
+    assert "CUTE: A concolic unit testing engine for C" in publicationsTwo.values
+    assert "Concurrent object-oriented programming" in publicationsTwo.values
+
+    print("All Google Scholar Crawler tests passed.")
+    
+# test_gscholar()

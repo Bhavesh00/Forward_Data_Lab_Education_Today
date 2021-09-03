@@ -82,6 +82,6 @@ def test_arxiv():
     publicationsTwo = crawl("Louis Theran", "University of Massachusetts")
     assert "Sparsity-certifying Graph Decompositions" in publicationsTwo.values
 
-    print("All Arxiv tests passed.")
+    print("All Arxiv Crawler tests passed.")
 
 # test_arxiv()
