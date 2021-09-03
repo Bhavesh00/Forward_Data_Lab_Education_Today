@@ -69,8 +69,8 @@ def crawl(professor, university):
     # Call crawling helper functions
     aminer = crawl_helper(professor, university, "data/aminer_papers_12.txt")
     mag = crawl_helper(professor, university, "data/mag_papers_10.txt",)
-    publications.append(aminer)
-    publications.append(mag)
+    publications = publications.append(aminer)
+    publications = publications.append(mag)
     return publications
 
 def crawl_helper(professor, university, file):
@@ -134,14 +134,20 @@ def crawl_helper(professor, university, file):
             else:
                 temp_dict["citations"] = ""
             
-            publications.append(temp_dict, ignore_index="True")
-            print(temp_dict)
+            publications = publications.append(temp_dict, ignore_index=True)
+            # print(temp_dict)
     
     return publications
 
+def test_OAG():
+    publications = crawl_helper("Juan Jacobo", "University of Colorado Boulder", "data/oag_test.txt")
+    assert "El concepto de empresa internacional en la regulación de los contratos de arrendamiento de inmuebles" in publications.values
+    assert "Juan Jacobo" in publications.values
 
-# crawl_helper("carolina galais", "Universitat Autonoma de Barcelona")
-# crawl_helper("A. Hrynkiewicz", "")
-# crawl("A. Hrynkiewicz", "")
-# aminer = crawl_helper(professor, university, "data/aminer_papers_12.txt")
-# mag = crawl_helper(professor, university, "data/mag_papers_10.txt",)
+    publicationsTwo = crawl_helper("Mark C. Hakey", "University of New Hampshire Durham", "data/oag_test.txt")
+    assert "Frequency doubling hybrid photoresist having negative and positive tone components and method of preparing the same" in publicationsTwo.values
+    assert "Mark C. Hakey, Steven J. Holmes, David V. Horak, Ahmad D. Katnani, Niranjan M. Patel, Paul A. Rabidoux" in publicationsTwo.values
+
+    print("All OAG Crawler tests passed.")
+
+# test_OAG()

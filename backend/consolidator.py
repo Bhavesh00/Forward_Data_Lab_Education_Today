@@ -55,11 +55,11 @@ def consolidate(professor, university):
     # print("Google Scholar crawling complete")
     # print(gscholar_publications)
     
-    publications.append(arxiv_publications)
-    publications.append(springer_publications)
-    publications.append(mag_publications)
-    publications.append(aminer_publications)
-    # publications.append(gscholar_publications)
+    publications = publications.append(arxiv_publications)
+    publications = publications.append(springer_publications)
+    publications = publications.append(mag_publications)
+    publications = publications.append(aminer_publications)
+    # publications = publications.append(gscholar_publications)
     
     return publications
 
