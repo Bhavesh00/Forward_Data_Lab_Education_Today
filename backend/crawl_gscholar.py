@@ -1,6 +1,11 @@
 """ 
-This program extracts professor and publication data from Google Scholar. https://scholar.google.com/  
+This program extracts professor and publication data from Google Scholar. 
+
+Knowledge base reference: https://scholar.google.com/ 
+
+WARNING: WEB SCRAPING CODE CAN BREAK IN THIS MODULE DUE TO VOLATILE GOOGLE SCHOLAR HTML TAGS THAT CHANGE BETWEEN UPDATES.
 """
+
 from googlesearch import search
 import requests
 from bs4 import BeautifulSoup as bs
@@ -13,10 +18,18 @@ from getpass import getpass
 from mysql.connector import connect, Error
 import time
 
-# This function takes in the name of a professor and a university.
-# Returns a dataframe containing the publication title, publication authors, publication abstract, and publication DOI 
-# of the publications associated with the professor from the given university.
 def crawl(professor, university):
+    """Crawls Google Scholar knowledge base for publications associated with the professor from the specified university.
+
+    Args:
+        professor (str): Name of professor
+        university (str): Name of university
+
+    Returns:
+        publications (pandas dataframe): Data containing the publications' titles, authors, abstracts, and DOI's
+
+    """
+
     # Reconfigure the encoding to avoid issues
     sys.stdin.reconfigure(encoding='utf-8')
     sys.stdout.reconfigure(encoding='utf-8')
@@ -30,7 +43,6 @@ def crawl(professor, university):
     publications_authors = []
     publications_abstracts = []
     publications_citations = []
-
     column_names = ["title", "authors", "abstract", "doi", "citations"]
     publications = pd.DataFrame(columns = column_names)
 
@@ -55,8 +67,6 @@ def crawl(professor, university):
                 # Potential Error as the tag changes to data-href on some browsers:
                 if link.get('href') is not None:
                     publications_urls.append("https://scholar.google.com" + link.get('href'))
-
-    print(publications_urls)
     
     # TODO: Need to still handle case where an author's publication list spans multiple pages on Google Scholar
     # Need to also add proxy to avoid Google bot detection.
@@ -85,17 +95,17 @@ def crawl(professor, university):
         num_citations = soup.find(class_="gsc_a_c")
         publications_citations.append(num_citations.text)
 
+    # Add the publications
     for x in range(len(publications_titles)):
-        tempDict = {}
-        tempDict['title'] = publications_titles[x]
-        tempDict['authors'] = publications_authors[x]
-        tempDict['abstract'] = publications_abstracts[x]
-        tempDict['doi'] = ""
-        tempDict['citations'] = publications_citations[x]
-        publications = publications.append(tempDict, ignore_index=True)
+        temp_dict = {}
+        temp_dict['title'] = publications_titles[x]
+        temp_dict['authors'] = publications_authors[x]
+        temp_dict['abstract'] = publications_abstracts[x]
+        temp_dict['doi'] = ""
+        temp_dict['citations'] = publications_citations[x]
+        publications = publications.append(temp_dict, ignore_index=True)
 
     return publications
-
 
 # search_query = "Jiawei Han, University of Illinois at Urbana-Champaign"
 # crawl("Jiawei Han", "University of Illinois at Urbana-Champaign")

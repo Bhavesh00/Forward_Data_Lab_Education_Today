@@ -9,39 +9,54 @@ import json
 from collections import Counter, defaultdict
 
 def get_metadata():
-    # Make Relative Paths (https://stackoverflow.com/questions/918154/relative-paths-in-python)
-    # /Users/bhave/Desktop/Forward_Data_Lab_Education_Today/backend/data/arxiv-metadata-oai-snapshot.json
-    with open('/Users/bhave/Desktop/Forward_Data_Lab_Education_Today/backend/data/arxiv-metadata-oai-snapshot.json') as f:
+    """This function returns the data from the json file."""
+    with open('data/arxiv-metadata-oai-snapshot.json') as f:
         for line in f:
             yield line
 
-# This function takes in the name of a professor and a university.
-# This function returns a dataframe containing the publication title, publication authors, publication abstract, and publication DOI 
-# of the publications associated with the professor from the given university.
 def crawl(professor, university):
-    # DataFrame
+    """Crawls Arxiv knowledge base for publications associated with the professor from the specified university.
+
+    Args:
+        professor (str): Name of professor
+        university (str): Name of university
+
+    Returns:
+        publications (pandas dataframe): Data containing the publications' titles, authors, abstracts, and DOI's
+
+    """
+
+    # Initialization
     metadata = get_metadata()
     column_names = ["title", "authors", "abstract", "doi", "citations"]
     publications = pd.DataFrame(columns = column_names)
 
+    # Loop through Arxiv data
     for ind, paper in enumerate(metadata):
         paper = json.loads(paper)
-        tempDict = {}
-        
+        temp_dict = {}
+
+        # Check if professor names match
         if professor.lower() == paper['submitter'].lower():
-            tempDict['title'] = paper['title']
-            tempDict['authors'] = paper['authors']
-            tempDict['abstract'] = paper['abstract']
-            tempDict['doi'] = paper['doi']
+            temp_dict['title'] = paper['title']
+            temp_dict['authors'] = paper['authors']
+            temp_dict['abstract'] = paper['abstract']
+            temp_dict['doi'] = paper['doi']
         
-        publications = publications.append(tempDict, ignore_index=True)
+        publications = publications.append(temp_dict, ignore_index=True)
     
     return publications
 
+def ab_name_format(professor):
+    """Formats professor name intto (First Initial, Middle Initial, Last Name) format.
 
-# This function converts the professor name (First Name Last Name) into (First Initial, Middle Initial, Last Name) format
-# and returns this string. This function will be used to match the author name formatting in the arXiv dataset.
-def abNameFormat(professor):
+    Args:
+        professor (str): Name of professor
+
+    Returns:
+        (str): Professor name in (First Initial, Middle Initial, Last Name) format
+
+    """
     if (professor == ""):
         return ""
 
@@ -59,7 +74,6 @@ def abNameFormat(professor):
     return temp.strip()
 
 
-
 crawl("", "")
-# print(abNameFormat("Peter A Stuart"))
+# print(ab_name_format("Peter A Stuart"))
 # crawl("Jiawei Han", "University of Illinois at Urbana-Champaign")
