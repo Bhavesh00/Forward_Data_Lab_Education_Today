@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 
 def get_metadata():
     """This function returns the data from the json file."""
-    with open('data/arxiv-metadata-oai-snapshot.json') as f:
+    with open('backend/data/arxiv-test.json') as f:
         for line in f:
             yield line
 
@@ -35,6 +35,8 @@ def crawl(professor, university):
     for ind, paper in enumerate(metadata):
         paper = json.loads(paper)
         temp_dict = {}
+        # print(paper)
+        # print(paper['submitter'])
 
         # Check if professor names match
         if professor.lower() == paper['submitter'].lower():
@@ -42,13 +44,12 @@ def crawl(professor, university):
             temp_dict['authors'] = paper['authors']
             temp_dict['abstract'] = paper['abstract']
             temp_dict['doi'] = paper['doi']
-        
-        publications = publications.append(temp_dict, ignore_index=True)
-    
+            publications = publications.append(temp_dict, ignore_index=True)
+            print(publications)
     return publications
 
 def ab_name_format(professor):
-    """Formats professor name intto (First Initial, Middle Initial, Last Name) format.
+    """Formats professor name into (First Initial, Middle Initial, Last Name) format.
 
     Args:
         professor (str): Name of professor
@@ -73,7 +74,14 @@ def ab_name_format(professor):
       
     return temp.strip()
 
+def test_arxiv():
+    publications = crawl("Pavel Nadolsky", "University of Colorado Boulder")
+    assert "Calculation of prompt diphoton production cross sections at Tevatron and\n  LHC energies" in publications.values
+    assert "10.1103/PhysRevD.76.013009" in publications.values
 
-crawl("", "")
-# print(ab_name_format("Peter A Stuart"))
-# crawl("Jiawei Han", "University of Illinois at Urbana-Champaign")
+    publicationsTwo = crawl("Louis Theran", "University of Massachusetts")
+    assert "Sparsity-certifying Graph Decompositions" in publicationsTwo.values
+
+    print("All Arxiv tests passed.")
+
+test_arxiv()
