@@ -140,6 +140,7 @@ def crawl_helper(professor, university, file):
     return publications
 
 def test_OAG():
+    """Testing suite for OAG crawler"""
     publications = crawl_helper("Juan Jacobo", "University of Colorado Boulder", "data/oag_test.txt")
     assert "El concepto de empresa internacional en la regulación de los contratos de arrendamiento de inmuebles" in publications.values
     assert "Juan Jacobo" in publications.values

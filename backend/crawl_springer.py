@@ -108,6 +108,7 @@ def creatorsListToString(creators_list):
     return temp.strip()
 
 def test_springer():
+    """Testing suite for Springer crawler"""
     publications = crawl("Yoshua Bengio", "University of Montreal")
     assert "A Comparative Study of Learning Outcomes for Online Learning Platforms" in publications.values
     assert "10.1007/978-3-030-78270-2_59" in publications.values

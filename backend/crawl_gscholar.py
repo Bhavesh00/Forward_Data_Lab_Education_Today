@@ -108,6 +108,7 @@ def crawl(professor, university):
     return publications
 
 def test_gscholar():
+    """Testing suite for Google Scholar crawler"""
     publications = crawl("Jiawei Han", "University of Illinois at Urbana-Champaign")
     assert "Data mining: concepts and techniques" in publications.values
     assert "Mining frequent patterns without candidate generation: A frequent-pattern tree approach" in publications.values

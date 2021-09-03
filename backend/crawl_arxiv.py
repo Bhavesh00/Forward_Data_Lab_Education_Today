@@ -75,6 +75,7 @@ def ab_name_format(professor):
     return temp.strip()
 
 def test_arxiv():
+    """Testing suite for Arxiv crawler"""
     publications = crawl("Pavel Nadolsky", "University of Colorado Boulder")
     assert "Calculation of prompt diphoton production cross sections at Tevatron and\n  LHC energies" in publications.values
     assert "10.1103/PhysRevD.76.013009" in publications.values

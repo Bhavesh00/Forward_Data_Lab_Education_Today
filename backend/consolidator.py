@@ -73,21 +73,34 @@ def remove_duplicates(publications):
         publications (pandas dataframe): Data containing the publications' titles, authors, abstracts, and DOI's
 
     """
-    publications = publications.drop_duplicates(subset=['title', 'doi'])
+    publications = publications.drop_duplicates(subset=['title'])
+    publications = publications.drop_duplicates(subset=['doi']) # Might potentially need to handle empty DOI's.
     return publications
 
+def test_consolidator():
+    """Testing suite for consolidator"""
+    column_names = ["title", "authors", "abstract", "doi", "citations"]
+    publications = pd.DataFrame(columns = column_names)
 
-publications = consolidate("Jiawei Han", "University of Illinois at Urbana-Champaign")
-print(publications)
+    # Testing removing duplicates based on DOI #.
+    temp_dict = {}   
+    temp_dict['title'] = "A Comparative Study of Learning Outcomes for Online Learning Platforms"
+    temp_dict['authors'] = "Yoshua Bengio"
+    temp_dict['abstract'] = "Abstract information"
+    temp_dict['doi'] = "10.1007/978-3-030-78270-2_59"
+    temp_dict["citations"] = 0
+    publications = publications.append(temp_dict, ignore_index=True)
+    temp_dict['title'] = "A Comparative Study"
+    publications = publications.append(temp_dict, ignore_index=True)
+    publications = remove_duplicates(publications)
+    assert len(publications) == 1
 
-publications = remove_duplicates(publications)
-print(publications)
+    # Testing removing duplicates based on Title
+    temp_dict['doi'] =  "10.1007/978-2-031-72340-3_61"
+    temp_dict['title'] = "A Comparative Study of Learning Outcomes for Online Learning Platforms"
+    publications = publications.append(temp_dict, ignore_index=True)
+    publications = remove_duplicates(publications)
+    assert len(publications) == 1
+    print("All consolidator tests passed.")
 
-
-"""
-publications = consolidate("Yoshua Bengio", "University of Montreal")
-print(publications)
-
-publications = consolidate("carolina galais", "UAB")
-print(publications)
-"""
+# test_consolidator()
